@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "Khabar",
+  "short_name": "Khabar",
+  "description": "Delhi NCR civic news, with links to the evidence behind each story.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#151713",
+  "theme_color": "#151713",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

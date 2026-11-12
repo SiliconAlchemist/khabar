@@ -1,0 +1,86 @@
+.bias-review-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px 14px;
+  margin-bottom: 20px;
+}
+
+.bias-review-picker > label { grid-column: 1 / -1; }
+.bias-review-picker > .story-link { min-height: 44px; }
+
+.bias-form {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.bias-review label {
+  display: block;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.bias-review select, .bias-review input, .bias-review textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--strong-line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 400;
+}
+
+.bias-review textarea {
+  display: block;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.bias-review input::placeholder, .bias-review textarea::placeholder { color: var(--muted); }
+.bias-form > label + :is(input, textarea), .bias-decision > label + :is(select, textarea) { margin-top: 7px; }
+.bias-form > :is(input, textarea) + label, .bias-decision > select + label { margin-top: 15px; }
+.bias-guidance { color: var(--muted); font-size: .86rem; line-height: 1.55; margin: 13px 0; }
+.bias-observations { display: grid; gap: 13px; margin: 16px 0; }
+.bias-observation {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+
+.bias-observation legend { padding-inline: 5px; color: var(--olive); font-weight: 750; }
+.bias-observation p { color: var(--muted); font-size: .88rem; line-height: 1.45; margin: 0 0 11px; }
+.bias-observation-fields { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1fr); gap: 11px; }
+.bias-observation-fields :is(select, textarea) { display: block; margin-top: 5px; }
+
+.bias-result {
+  color: var(--olive);
+  background: var(--olive-pale);
+  border: 1px solid var(--strong-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: .9rem;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.bias-decision {
+  border-top: 1px solid var(--line);
+  margin-top: 19px;
+  padding-top: 17px;
+}
+
+.bias-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.bias-decision .bias-guidance { margin-bottom: 0; }
+
+@media (max-width: 540px) {
+  .bias-form { padding: 15px; }
+  .bias-review-picker, .bias-observation-fields { grid-template-columns: 1fr; }
+}
