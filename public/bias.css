@@ -77,8 +77,27 @@
   padding-top: 17px;
 }
 
+[data-bias-analysis] + label { margin-top: 15px; }
+[data-bias-analysis] blockquote {
+  margin: 8px 0 0;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid var(--strong-line);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .bias-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .bias-decision .bias-guidance { margin-bottom: 0; }
+
+.post-analysis { margin: 8px 0; font-size: .875rem; }
+.post-analysis summary { width: fit-content; cursor: pointer; font-weight: 700; }
+.post-analysis p, .post-analysis blockquote { margin: 8px 0; }
+.post-analysis blockquote { padding-inline-start: 10px; border-inline-start: 2px solid currentColor; overflow-wrap: anywhere; }
+.post-analysis .status:empty { display: none; }
+
+.video-fact-check { padding-block: 12px; border-bottom: 1px solid var(--line); }
+.video-fact-check h3 { margin: 5px 0; }
+.video-fact-check .story-link { min-height: 44px; }
 
 @media (max-width: 540px) {
   .bias-form { padding: 15px; }

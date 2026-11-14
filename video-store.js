@@ -21,6 +21,21 @@ export function openVideoStore(directory = process.env.KHABAR_DATA_DIR || defaul
       format TEXT,
       story_id TEXT
     );
+    CREATE TABLE IF NOT EXISTS video_transcripts (
+      id TEXT PRIMARY KEY,
+      transcript TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS video_fact_checks (
+      id TEXT PRIMARY KEY,
+      checks TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS post_analyses (
+      post_key TEXT NOT NULL,
+      source_hash TEXT NOT NULL,
+      findings TEXT NOT NULL,
+      analysed_at INTEGER NOT NULL,
+      PRIMARY KEY (post_key, source_hash)
+    );
   `);
 
   const upsert = db.prepare(`
@@ -55,6 +70,17 @@ export function openVideoStore(directory = process.env.KHABAR_DATA_DIR || defaul
     UPDATE youtube_videos SET published_at = NULL, format = NULL, story_id = NULL
     WHERE id = ? AND published_at IS NOT NULL
   `);
+  const video = db.prepare('SELECT id, title FROM youtube_videos WHERE id = ? AND checked_at > ?');
+  const transcripts = db.prepare('SELECT id, transcript FROM video_transcripts');
+  const setTranscript = db.prepare(`INSERT INTO video_transcripts VALUES (?, ?)
+    ON CONFLICT(id) DO UPDATE SET transcript = excluded.transcript`);
+  const factChecks = db.prepare('SELECT id, checks FROM video_fact_checks');
+  const setFactChecks = db.prepare(`INSERT INTO video_fact_checks VALUES (?, ?)
+    ON CONFLICT(id) DO UPDATE SET checks = excluded.checks`);
+  const analysis = db.prepare('SELECT findings, analysed_at AS analysedAt FROM post_analyses WHERE post_key = ? AND source_hash = ?');
+  const saveAnalysis = db.prepare(`INSERT INTO post_analyses VALUES (?, ?, ?, ?)
+    ON CONFLICT(post_key, source_hash) DO UPDATE SET findings = excluded.findings,
+    analysed_at = excluded.analysed_at WHERE post_analyses.analysed_at <= excluded.analysed_at`);
 
   function removeExpired(now) {
     expire.run(now - maxMetadataAge);
@@ -93,6 +119,18 @@ export function openVideoStore(directory = process.env.KHABAR_DATA_DIR || defaul
     unpublish(id) {
       return unpublish.run(id).changes > 0;
     },
+    video(id, now = Date.now()) {
+      return video.get(id, now - maxMetadataAge);
+    },
+    transcripts: () => new Map(transcripts.all().map(({ id, transcript }) => [id, transcript])),
+    setTranscript: (id, transcript) => setTranscript.run(id, transcript),
+    factChecks: () => new Map(factChecks.all().map(({ id, checks }) => [id, JSON.parse(checks)])),
+    setFactChecks: (id, checks) => setFactChecks.run(id, JSON.stringify(checks)),
+    analysis(postKey, sourceHash) {
+      const row = analysis.get(postKey, sourceHash);
+      return row && { ...JSON.parse(row.findings), analysedAt: row.analysedAt };
+    },
+    saveAnalysis: (postKey, sourceHash, findings, analysedAt) => saveAnalysis.run(postKey, sourceHash, JSON.stringify(findings), analysedAt),
     removeExpired,
     close() {
       db.close();

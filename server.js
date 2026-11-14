@@ -1,6 +1,8 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { openVideoStore } from './video-store.js';
+import { handleBiasAnalysis, isLocalAnalysisRequest, sendJson } from './bias-analyser.js';
+import { postSources, publicAnalysis, runPostAnalysis } from './post-analysis.js';
 
 const assets = new Map([
   ['/', ['index.html', 'text/html']],
@@ -33,13 +35,84 @@ const pageHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };
 let videoStore;
+const activeAnalyses = new Map();
+
+function refreshAnalysis(source) {
+  const current = activeAnalyses.get(source.key);
+  if (current) return current.sourceHash === source.sourceHash
+    ? current.promise
+    : current.promise.then(() => refreshAnalysis(source));
+
+  const promise = runPostAnalysis(videoStore, source).finally(() => activeAnalyses.delete(source.key));
+  activeAnalyses.set(source.key, { sourceHash: source.sourceHash, promise });
+  return promise;
+}
+
+async function backfillAnalyses() {
+  try {
+    videoStore ??= openVideoStore();
+    for (const source of postSources(videoStore).values()) {
+      if (!source.draft || videoStore.analysis(source.key, source.sourceHash)) continue;
+      if (activeAnalyses.size && !activeAnalyses.has(source.key)) break;
+      const result = await refreshAnalysis(source);
+      if (result.status === 503 || result.status === 504) break;
+    }
+  } catch (error) {
+    console.error('Could not backfill post analyses:', error.message);
+  } finally {
+    setTimeout(backfillAnalyses, 30_000).unref();
+  }
+}
 
 const server = createServer(async (request, response) => {
+  const path = request.url.split('?')[0];
+  if (path === '/api/post-analyses' || path.startsWith('/api/post-analyses/')) {
+    const listing = path === '/api/post-analyses';
+    const method = listing ? 'GET' : 'POST';
+    if (request.method !== method) return response.writeHead(405, { Allow: method }).end();
+    const serverPort = server.address().port;
+    const localAddress = request.socket.localAddress?.replace(/^::ffff:/, '') ?? '';
+    const localHost = localAddress.includes(':') ? `[${localAddress}]:${serverPort}` : `${localAddress}:${serverPort}`;
+    const sameOrigin = localAddress && request.headers.host === localHost && request.headers.origin === `http://${localHost}`;
+    if (!listing && !sameOrigin && !isLocalAnalysisRequest(request, serverPort)) {
+      return sendJson(response, 403, { error: 'Open Khabar directly on this computer or its local network address to refresh analysis.' });
+    }
+    try {
+      videoStore ??= openVideoStore();
+      const sources = postSources(videoStore);
+      if (listing) {
+        const checks = videoStore.factChecks();
+        return sendJson(response, 200, Object.fromEntries([...sources].map(([key, source]) => {
+          const analysis = publicAnalysis(source, videoStore.analysis(key, source.sourceHash));
+          if (key.startsWith('video/')) analysis.factChecks = checks.get(key.slice('video/'.length)) ?? [];
+          return [key, analysis];
+        })));
+      }
+      const source = sources.get(path.slice('/api/post-analyses/'.length));
+      if (!source) return sendJson(response, 404, { error: 'Post unavailable.' });
+      if (!source.draft) return sendJson(response, 409, { error: 'A transcript is needed to analyse this video.' });
+      if (activeAnalyses.size && !activeAnalyses.has(source.key)) {
+        return sendJson(response, 429, { error: 'The local model is analysing another post. Try again shortly.' });
+      }
+      const result = await refreshAnalysis(source);
+      return sendJson(response, result.status, result.body);
+    } catch (error) {
+      console.error('Post analysis failed:', error.message);
+      return sendJson(response, 503, { error: 'Post analysis is unavailable.' });
+    }
+  }
+  if (path === '/api/bias-analysis') {
+    if (request.method !== 'POST') {
+      response.writeHead(405, { Allow: 'POST' }).end();
+      return;
+    }
+    await handleBiasAnalysis(request, response, server.address().port);
+    return;
+  }
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     response.writeHead(405, { Allow: 'GET, HEAD' }).end();
     return;
   }
-  const path = request.url.split('?')[0];
   if (path === '/api/videos') {
     try {
       videoStore ??= openVideoStore();
@@ -87,4 +160,5 @@ server.on('error', error => {
 
 server.listen(port, host, () => {
   console.log(`Khabar is running at http://${host}:${server.address().port}`);
+  void backfillAnalyses();
 });

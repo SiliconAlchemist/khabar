@@ -9,6 +9,20 @@ const labels = {
   insufficient: 'Insufficient evidence',
 };
 
+const localAnalysisMessages = {
+  allegation: {
+    yes: 'The headline may present an attributed allegation as fact.',
+    no: 'The model found no clear allegation presented as fact in the headline.',
+    inconclusive: 'The model could not assess whether the headline presents an allegation as fact.',
+  },
+  language: {
+    author: 'The model flagged wording in the journalist’s own voice.',
+    quoted: 'The model attributed the strongest wording to a quoted speaker.',
+    none: 'The model found no clear example of loaded wording.',
+    inconclusive: 'The model could not determine who used the wording.',
+  },
+};
+
 const rubric = [
   {
     id: 'framing',
@@ -123,8 +137,14 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
         <a class="story-link" data-bias-video-link hidden>Open video</a>
       </div>
       <form class="bias-form">
-        <label for="bias-transcript">Transcript or excerpt</label>
+        <label for="bias-headline">Headline (optional)</label>
+        <input id="bias-headline" name="headline" type="text" maxlength="300">
+        <label for="bias-transcript">Article text or transcript</label>
         <textarea id="bias-transcript" name="transcript" rows="7" maxlength="50000" placeholder="Paste the part you want to review"></textarea>
+        <div class="bias-actions">
+          <button type="button" class="outline-button" data-bias-analyse>Analyse with d1-2B</button>
+        </div>
+        <div class="bias-result" data-bias-analysis role="status" hidden></div>
         <label for="bias-context">Political context</label>
         <input id="bias-context" name="politicalContext" type="text" maxlength="300" placeholder="For example, Delhi politics and air-quality regulation">
         <p class="bias-guidance">Assess the segment’s own narration, selection, and treatment. Attribute quoted views to the speaker. Cite two distinct excerpts for a suggested label.</p>
@@ -153,10 +173,13 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
   const videoLink = container.querySelector('[data-bias-video-link]');
   const form = container.querySelector('.bias-form');
   const result = form.querySelector('[data-bias-result]');
+  const analyse = form.querySelector('[data-bias-analyse]');
+  const analysis = form.querySelector('[data-bias-analysis]');
   const status = form.querySelector('[data-bias-status]');
   const remove = form.querySelector('[data-bias-remove]');
   const fields = form.elements;
   const drafts = new Map();
+  let pendingAnalysis;
 
   for (const video of [...videos, { id: standaloneId, title: 'Standalone segment' }]) {
     const option = document.createElement('option');
@@ -167,6 +190,7 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
 
   function getDraft() {
     return {
+      headline: fields.headline.value.trim(),
       transcript: fields.transcript.value.trim(),
       politicalContext: fields.politicalContext.value.trim(),
       signals: rubric.map(({ id }) => ({
@@ -183,6 +207,7 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
     const review = readReviews().find(item => item.videoId === id);
     const draft = drafts.get(id) ?? review;
     form.reset();
+    fields.headline.value = draft?.headline ?? videos.find(video => video.id === id)?.title ?? '';
     fields.transcript.value = draft?.transcript ?? '';
     fields.politicalContext.value = draft?.politicalContext ?? '';
     fields.label.value = draft?.label ?? '';
@@ -194,6 +219,7 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
       fields.namedItem(`${id}-excerpt`).value = signal?.excerpt ?? '';
     }
     result.hidden = true;
+    resetAnalysis();
     status.textContent = review ? `Saved label · ${labels[review.label]}` : '';
     remove.hidden = !review;
     videoLink.hidden = id === standaloneId;
@@ -210,7 +236,57 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
     showReview(selectedId);
   });
 
-  form.addEventListener('input', () => { result.hidden = true; });
+  function resetAnalysis() {
+    pendingAnalysis?.abort();
+    pendingAnalysis = undefined;
+    analyse.disabled = false;
+    analysis.hidden = true;
+  }
+
+  form.addEventListener('input', event => {
+    result.hidden = true;
+    if (event.target === fields.headline || event.target === fields.transcript) resetAnalysis();
+  });
+
+  analyse.addEventListener('click', async () => {
+    const { headline, transcript } = getDraft();
+    analysis.hidden = false;
+    if (!transcript || transcript.length > 6000) {
+      analysis.textContent = 'Enter up to 6,000 characters of article text or transcript for this trial.';
+      return;
+    }
+
+    const controller = new AbortController();
+    pendingAnalysis = controller;
+    analyse.disabled = true;
+    analysis.textContent = 'Analysing this draft on your computer…';
+    try {
+      const response = await fetch('/api/bias-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ headline, draft: transcript }),
+        signal: controller.signal,
+      });
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.startsWith('application/json')) throw new Error('Open the local Khabar server to use d1-2B.');
+      const findings = await response.json();
+      if (!response.ok) throw new Error(findings.error);
+      if (controller.signal.aborted) return;
+      analysis.textContent = `${localAnalysisMessages.allegation[findings.allegation]} ${localAnalysisMessages.language[findings.language]}`;
+      if (findings.evidence) {
+        const quote = document.createElement('blockquote');
+        quote.textContent = findings.evidence;
+        analysis.append(quote);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) analysis.textContent = error.message;
+    } finally {
+      if (pendingAnalysis === controller) {
+        pendingAnalysis = undefined;
+        analyse.disabled = false;
+      }
+    }
+  });
   form.querySelector('[data-bias-check]').addEventListener('click', () => {
     const assessment = evaluateBias(getDraft());
     result.textContent = `Suggested label · ${labels[assessment.code]}. ${assessment.reason}`;
