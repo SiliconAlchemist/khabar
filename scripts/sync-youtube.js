@@ -1,17 +1,18 @@
-import { execFile } from 'node:child_process';
-import { resolve } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
-import { parseArgs, promisify } from 'node:util';
-import { readFile, stat } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import { parseArgs } from 'node:util';
+import { readFile } from 'node:fs/promises';
 import { stories } from '../public/stories.js';
+import { explainers } from '../public/explainers.js';
 import { videos } from '../public/videos.js';
 import { openVideoStore } from '../video-store.js';
-import { analysisSource, runPostAnalysis } from '../post-analysis.js';
+import { analysisSource, currentPostBias, runPostAnalysis } from '../post-analysis.js';
+import { videoLanguage } from '../feed-language.js';
 import { defaultChannels, discoverYouTube, refreshYouTubeVideos } from './discover-youtube.js';
+import { prepareTranscript } from './transcript-input.js';
 
 const usage = `Usage:
-  node scripts/sync-youtube.js sync [--api-key KEY] [--channel @HANDLE] [--limit 10] [--interval-minutes 60]
+  node scripts/sync-youtube.js sync [--api-key KEY] [--channel @HANDLE] [--limit 10] [--include-full] [--interval-minutes 60]
   node scripts/sync-youtube.js queue [--channel @HANDLE]
   node scripts/sync-youtube.js publish VIDEO_ID [--format shorts|full] [--story STORY_ID] [--transcript FILE | --media FILE]
   node scripts/sync-youtube.js transcript VIDEO_ID (--transcript FILE | --media FILE)
@@ -23,52 +24,43 @@ With no interval, sync runs once. A positive interval keeps it running in the fo
 The server and this script use data/khabar.sqlite, or the same KHABAR_DATA_DIR if set.
 `;
 
-const runFile = promisify(execFile);
-const whisperScript = fileURLToPath(new URL('./transcribe-video.py', import.meta.url));
-const whisperCache = fileURLToPath(new URL('../data/local-ai/whisper-models/', import.meta.url));
-
-async function transcribeMedia(file) {
-  const media = resolve(file);
-  const mediaStat = await stat(media).catch(error => {
-    if (error.code !== 'ENOENT') throw error;
-  });
-  if (!mediaStat?.isFile()) throw new Error('Pass a local audio or video file to --media.');
-  const python = process.env.KHABAR_WHISPER_PYTHON || 'python';
-  console.log('Transcribing with local Whisper. The first run downloads the model.');
-  let transcript;
-  try {
-    const { stdout } = await runFile(python, [whisperScript, '--cache-dir', whisperCache, '--', media], { maxBuffer: 8 * 1024 * 1024 });
-    transcript = stdout.trim();
-  } catch (error) {
-    if (error.code === 'ENOENT') throw new Error('Python is unavailable. Set KHABAR_WHISPER_PYTHON to the Whisper environment’s Python executable.');
-    throw new Error(error.stderr?.trim() || error.message);
-  }
-  if (!transcript) throw new Error('Whisper did not detect any speech in the media file.');
-  return transcript;
-}
-
 function normalizeChannel(channel) {
   const trimmed = channel.trim();
   return trimmed.startsWith('@') ? trimmed.toLowerCase() : trimmed;
 }
 
-async function syncChannel(store, apiKey, channel, limit) {
-  const checkedAt = Date.now();
-  const discovered = await discoverYouTube({ apiKey, channel, limit });
-  const candidates = discovered.candidates.filter(video => !video.madeForKids);
-  const discoveredIds = new Set(candidates.map(candidate => candidate.id));
-  const toRecheck = store.publishedIds(channel).filter(id => !discoveredIds.has(id));
-  let refreshed;
-  try {
-    refreshed = (await refreshYouTubeVideos({ apiKey, ids: toRecheck })).filter(video => !video.madeForKids);
-  } catch (error) {
-    store.sync(channel, candidates, [], checkedAt);
-    throw error;
+export async function syncYouTube(store, { apiKey, limit, includeFull, channel, fetchImpl }) {
+  const channels = new Set((channel ?? defaultChannels).map(normalizeChannel));
+  const discoveredIds = new Set();
+  let hadError = false;
+  store.removeExpired(Date.now());
+  for (const source of channels) {
+    try {
+      const checkedAt = Date.now();
+      const discovered = await discoverYouTube({ apiKey, channel: source, limit, includeFull, fetchImpl });
+      const candidates = discovered.candidates.filter(video => !video.madeForKids);
+      store.sync(source, candidates, [], checkedAt);
+      for (const candidate of candidates) discoveredIds.add(candidate.id);
+      console.log(source + ': refreshed ' + candidates.length + ' recent candidates.');
+    } catch (error) {
+      hadError = true;
+      console.error(source + ': ' + error.message);
+    }
   }
-  const refreshedIds = new Set(refreshed.map(candidate => candidate.id));
-  const unavailable = toRecheck.filter(id => !refreshedIds.has(id));
-  store.sync(channel, [...candidates, ...refreshed], unavailable, checkedAt);
-  console.log(`${channel}: refreshed ${candidates.length} recent candidates.`);
+  const toRecheck = store.publishedIds().filter(id => !discoveredIds.has(id));
+  if (toRecheck.length) {
+    try {
+      const checkedAt = Date.now();
+      const refreshed = (await refreshYouTubeVideos({ apiKey, ids: toRecheck, fetchImpl })).filter(video => !video.madeForKids);
+      const available = new Set(refreshed.map(video => video.id));
+      store.refreshPublished(refreshed, toRecheck.filter(id => !available.has(id)), checkedAt);
+      console.log('Rechecked ' + toRecheck.length + ' published videos. ' + refreshed.length + ' available.');
+    } catch (error) {
+      hadError = true;
+      console.error('Published videos: ' + error.message);
+    }
+  }
+  return !hadError;
 }
 
 async function runSync(store, values) {
@@ -80,20 +72,10 @@ async function runSync(store, values) {
   if (!Number.isInteger(interval) || interval < 0 || interval > 2_147_483_647) {
     throw new Error('Provide an interval in minutes between zero and 35791.');
   }
-  const channels = new Set((values.channel ?? defaultChannels).map(normalizeChannel));
   do {
-    store.removeExpired(Date.now());
-    let hadError = false;
-    for (const channel of channels) {
-      try {
-        await syncChannel(store, apiKey, channel, limit);
-      } catch (error) {
-        hadError = true;
-        console.error(`${channel}: ${error.message}`);
-      }
-    }
+    const ok = await syncYouTube(store, { apiKey, channel: values.channel, limit, includeFull: values['include-full'] });
     if (!interval) {
-      if (hadError) process.exitCode = 1;
+      if (!ok) process.exitCode = 1;
       return;
     }
     await setTimeout(interval);
@@ -137,6 +119,7 @@ async function main() {
       'api-key': { type: 'string' },
       channel: { type: 'string', multiple: true },
       limit: { type: 'string', default: '10' },
+      'include-full': { type: 'boolean' },
       'interval-minutes': { type: 'string', default: '0' },
       format: { type: 'string', default: 'shorts' },
       story: { type: 'string' },
@@ -177,17 +160,20 @@ async function main() {
       console.log(`Saved ${checks.length} fact checks for ${id}.`);
     } else if (command === 'publish' || command === 'transcript') {
       if (!['shorts', 'full'].includes(values.format)) throw new Error('--format must be shorts or full.');
-      if (values.story && !stories.some(story => story.id === values.story)) {
-        throw new Error('Choose an existing story ID from public/stories.js.');
+      if (values.story && ![...stories, ...explainers].some(story => story.id === values.story)) {
+        throw new Error('Choose an existing Khabar story or explainer ID.');
       }
       const video = store.video(id) ?? (command === 'transcript' ? videos.find(item => item.id === id) : undefined);
       if (!video) throw new Error('Video unavailable. Run sync and check queue.');
-      const transcript = values.media ? await transcribeMedia(values.media)
-        : values.transcript ? (await readFile(values.transcript, 'utf8')).trim() : '';
-      if (values.transcript && !transcript) throw new Error('The transcript file is empty.');
-      if (transcript) store.setTranscript(id, transcript);
-      const source = analysisSource('video', video, store.transcripts().get(id));
-      if (source.draft && !store.analysis(source.key, source.sourceHash)) {
+      const transcript = await prepareTranscript(values.transcript, values.media, store.transcriptInput(id));
+      const text = transcript?.text ?? store.transcript(id);
+      const language = text?.trim() && videoLanguage(video, text);
+      if (command === 'publish' && !language) {
+        throw new Error('Add a transcript and confirm the video is in English or Hindi before publishing.');
+      }
+      if (transcript) store.setTranscript(id, transcript.text, transcript);
+      const source = analysisSource('video', video, text);
+      if (language && source.draft && !currentPostBias(store, source)) {
         const result = await runPostAnalysis(store, source);
         if (result.status !== 200) console.warn(`Analysis pending for ${id}. ${result.body.error}`);
       }
@@ -206,9 +192,11 @@ async function main() {
   }
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(`YouTube sync: ${error.message}`);
-  process.exitCode = 1;
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(`YouTube sync: ${error.message}`);
+    process.exitCode = 1;
+  }
 }

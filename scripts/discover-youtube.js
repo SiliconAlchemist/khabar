@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
+import { languageTag } from '../feed-language.js';
 
 const defaultChannel = '@PeekTVOfficial';
 export const defaultChannels = [
@@ -11,6 +12,21 @@ export const defaultChannels = [
   '@newslaundry',
   '@ndtvindia',
   '@indianexpress',
+  '@aljazeeraenglish',
+  '@BBCNews',
+  '@dwnews',
+  '@France24_en',
+  '@channelnewsasia',
+  '@nhkworldjapan',
+  '@sabcnews',
+  '@abcnewsaustralia',
+  '@CBCNews',
+  '@AssociatedPress',
+  '@TheInfographicsShow',
+  '@Fireship',
+  '@ColdFusion',
+  '@PracticalEngineeringChannel',
+  '@WendoverProductions',
 ];
 const defaultLimit = 10;
 const maxPages = 3;
@@ -20,12 +36,14 @@ const channelIdPattern = /^UC[A-Za-z0-9_-]{22}$/;
 
 const usage = `Usage: node scripts/discover-youtube.js [--api-key KEY] [--channel @HANDLE|CHANNEL_ID] [--limit 1-50]
 
-Find recent public, embeddable YouTube uploads up to three minutes long that are available in India.
+Find recent public, embeddable YouTube uploads from news channels around the world.
+Uploads explicitly tagged with a spoken language other than English or Hindi are skipped.
 Review each candidate for news relevance and Shorts format before adding it to Khabar.
 
   --api-key  YouTube Data API key. Falls back to YOUTUBE_API_KEY when omitted.
   --channel  A channel handle or ID. Repeat to select several channels.
   --limit    Maximum candidates per channel (default: 10). Scans up to 150 recent uploads per channel.
+  --include-full  Include uploads longer than three minutes.
   --help     Show this message.
 
 Default channels: ${defaultChannels.join(', ')}.
@@ -59,27 +77,27 @@ async function requestYouTube(fetchImpl, apiKey, endpoint, params) {
   return result;
 }
 
-function toCandidate(video) {
+function toCandidate(video, maxDuration) {
   const { status, snippet, contentDetails } = video;
   if (status?.privacyStatus !== 'public' || status.embeddable !== true) {
     return null;
   }
   if (snippet?.liveBroadcastContent !== 'none' || typeof snippet.title !== 'string' || !snippet.title.trim()) return null;
+  const language = languageTag(snippet.defaultAudioLanguage);
+  if (language === null || (language === undefined && languageTag(snippet.defaultLanguage) === null)) return null;
 
-  const restrictions = contentDetails?.regionRestriction;
-  if (restrictions?.blocked?.includes('IN') || (restrictions?.allowed && !restrictions.allowed.includes('IN'))) {
-    return null;
-  }
-  const duration = /^PT(?:(\d+)M)?(?:(\d+)S)?$/.exec(contentDetails?.duration ?? '');
+  if (contentDetails?.regionRestriction?.allowed?.length === 0) return null;
+  const duration = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(contentDetails?.duration ?? '');
   if (!duration) return null;
 
-  const [, minutes = '0', seconds = '0'] = duration;
-  const durationSeconds = Number(minutes) * 60 + Number(seconds);
-  if (durationSeconds < 1 || durationSeconds > 180) return null;
+  const [, days = '0', hours = '0', minutes = '0', seconds = '0'] = duration;
+  const durationSeconds = Number(days) * 86400 + Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+  if (!Number.isSafeInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > maxDuration) return null;
 
   return {
     id: video.id,
     title: snippet.title,
+    ...(language && { language }),
     url: `https://www.youtube.com/watch?v=${video.id}`,
     durationSeconds,
     sourcePublishedAt: typeof snippet.publishedAt === 'string' ? snippet.publishedAt : null,
@@ -87,14 +105,14 @@ function toCandidate(video) {
   };
 }
 
-async function videoDetails(request, ids) {
+async function videoDetails(request, ids, maxDuration = Infinity) {
   const result = await request('videos', {
     part: 'snippet,status,contentDetails',
     id: ids.join(','),
-    fields: 'items(id,snippet(title,liveBroadcastContent,publishedAt),status(privacyStatus,embeddable,madeForKids),contentDetails(duration,regionRestriction))',
+    fields: 'items(id,snippet(title,liveBroadcastContent,publishedAt,defaultLanguage,defaultAudioLanguage),status(privacyStatus,embeddable,madeForKids),contentDetails(duration,regionRestriction))',
   });
   if (!Array.isArray(result.items)) throw new Error('YouTube returned an incomplete video list.');
-  return new Map(result.items.map(video => [video.id, toCandidate(video)]));
+  return new Map(result.items.map(video => [video.id, toCandidate(video, maxDuration)]));
 }
 
 export async function refreshYouTubeVideos({ apiKey, ids, fetchImpl = fetch }) {
@@ -112,6 +130,7 @@ export async function discoverYouTube({
   apiKey,
   channel = defaultChannel,
   limit = defaultLimit,
+  includeFull = false,
   fetchImpl = fetch,
 }) {
   const channelFilter = channelIdPattern.test(channel) ? 'id' : 'forHandle';
@@ -149,7 +168,7 @@ export async function discoverYouTube({
     for (const id of ids) seen.add(id);
 
     if (ids.length) {
-      const byId = await videoDetails(request, ids);
+      const byId = await videoDetails(request, ids, includeFull ? Infinity : 180);
       for (const id of ids) {
         if (candidates.length === limit) break;
         const candidate = byId.get(id);
@@ -170,6 +189,7 @@ async function main() {
       'api-key': { type: 'string' },
       channel: { type: 'string', multiple: true },
       limit: { type: 'string', default: String(defaultLimit) },
+      'include-full': { type: 'boolean' },
       help: { type: 'boolean' },
     },
   });
@@ -194,7 +214,7 @@ async function main() {
   const indent = channels.size === 1 ? 2 : undefined;
   for (const channel of channels.values()) {
     try {
-      const result = await discoverYouTube({ apiKey, channel, limit });
+      const result = await discoverYouTube({ apiKey, channel, limit, includeFull: values['include-full'] });
       console.log(JSON.stringify(result, null, indent));
     } catch (error) {
       console.error(`YouTube discovery (${channel}): ${error.message}`);

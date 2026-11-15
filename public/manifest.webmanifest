@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Khabar",
   "short_name": "Khabar",
-  "description": "Delhi NCR civic news, with links to the evidence behind each story.",
+  "description": "World news, credited reporting, and links to the evidence behind Khabar's explainers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

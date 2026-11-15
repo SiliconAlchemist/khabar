@@ -1,5 +1,13 @@
 const storageKey = 'khabar:bias-reviews';
 const standaloneId = 'standalone';
+const opinionSample = {
+  id: 'opinion-sample',
+  title: 'Opinion sample · New York Post',
+  headline: 'Talarico vs. AOC: Have Democrats learned to back strong borders?',
+  transcript: 'America wants secure borders with strong, competent enforcement, not Biden-style “wave them in” policies.',
+  politicalContext: 'U.S. immigration enforcement',
+  url: 'https://nypost.com/2026/11/13/opinion/talarico-vs-aoc-have-democrats-learned-to-back-strong-borders/',
+};
 
 const labels = {
   left: 'Left-leaning',
@@ -10,6 +18,11 @@ const labels = {
 };
 
 const localAnalysisMessages = {
+  advocacy: {
+    advocates: 'The model found political advocacy in the author’s own framing.',
+    descriptive: 'The model read the framing as primarily descriptive or attributed.',
+    uncertain: 'The model was uncertain about the author’s political advocacy.',
+  },
   allegation: {
     yes: 'The headline may present an attributed allegation as fact.',
     no: 'The model found no clear allegation presented as fact in the headline.',
@@ -181,7 +194,7 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
   const drafts = new Map();
   let pendingAnalysis;
 
-  for (const video of [...videos, { id: standaloneId, title: 'Standalone segment' }]) {
+  for (const video of [...videos, { id: standaloneId, title: 'Standalone segment' }, opinionSample]) {
     const option = document.createElement('option');
     option.value = video.id;
     option.textContent = video.publisher ? `${video.title} · ${video.publisher}` : video.title;
@@ -205,7 +218,8 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
 
   function showReview(id) {
     const review = readReviews().find(item => item.videoId === id);
-    const draft = drafts.get(id) ?? review;
+    const isSample = id === opinionSample.id;
+    const draft = drafts.get(id) ?? review ?? (isSample ? opinionSample : undefined);
     form.reset();
     fields.headline.value = draft?.headline ?? videos.find(video => video.id === id)?.title ?? '';
     fields.transcript.value = draft?.transcript ?? '';
@@ -223,7 +237,10 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
     status.textContent = review ? `Saved label · ${labels[review.label]}` : '';
     remove.hidden = !review;
     videoLink.hidden = id === standaloneId;
-    if (!videoLink.hidden) videoLink.href = `#watch/${encodeURIComponent(id)}`;
+    videoLink.textContent = isSample ? 'Original opinion' : 'Open video';
+    videoLink.target = isSample ? '_blank' : '';
+    videoLink.rel = isSample ? 'noopener noreferrer' : '';
+    if (!videoLink.hidden) videoLink.href = isSample ? opinionSample.url : `#watch/${encodeURIComponent(id)}`;
   }
 
   let selectedId = videos.some(video => video.id === videoId) ? videoId : videos[0]?.id ?? standaloneId;
@@ -272,10 +289,16 @@ export function mountBiasReview(container, { videos = [], videoId } = {}) {
       const findings = await response.json();
       if (!response.ok) throw new Error(findings.error);
       if (controller.signal.aborted) return;
-      analysis.textContent = `${localAnalysisMessages.allegation[findings.allegation]} ${localAnalysisMessages.language[findings.language]}`;
-      if (findings.evidence) {
+      const framing = labels[findings.label] ?? labels.insufficient;
+      analysis.textContent = [
+        `Political framing · ${framing}.`,
+        localAnalysisMessages.advocacy[findings.advocacy],
+        localAnalysisMessages.language[findings.language],
+        localAnalysisMessages.allegation[findings.allegation],
+      ].filter(Boolean).join(' ');
+      for (const excerpt of new Set([findings.framingEvidence, findings.evidence].filter(Boolean))) {
         const quote = document.createElement('blockquote');
-        quote.textContent = findings.evidence;
+        quote.textContent = excerpt;
         analysis.append(quote);
       }
     } catch (error) {

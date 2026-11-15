@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
+    "posts": "node scripts/sync-posts.js",
+    "analyze:videos": "node scripts/analyze-videos.js",
     "discover:youtube": "node scripts/discover-youtube.js"
+  },
+  "dependencies": {
+    "franc-min": "6.2.0"
   }
 }

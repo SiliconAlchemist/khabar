@@ -2,12 +2,15 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { openVideoStore } from './video-store.js';
 import { handleBiasAnalysis, isLocalAnalysisRequest, sendJson } from './bias-analyser.js';
-import { postSources, publicAnalysis, runPostAnalysis } from './post-analysis.js';
+import { currentPostBias, postSources, publicAnalysis, runPostAnalysis } from './post-analysis.js';
+import { publicArticleDetails, publicArticles, publicVideoTranscript, publicWatchVideos } from './feed-catalog.js';
 
 const assets = new Map([
   ['/', ['index.html', 'text/html']],
   ['/app.js', ['app.js', 'text/javascript']],
+  ['/article-reader.js', ['article-reader.js', 'text/javascript']],
   ['/stories.js', ['stories.js', 'text/javascript']],
+  ['/explainers.js', ['explainers.js', 'text/javascript']],
   ['/videos.js', ['videos.js', 'text/javascript']],
   ['/playback.js', ['playback.js', 'text/javascript']],
   ['/bias.js', ['bias.js', 'text/javascript']],
@@ -51,8 +54,10 @@ function refreshAnalysis(source) {
 async function backfillAnalyses() {
   try {
     videoStore ??= openVideoStore();
-    for (const source of postSources(videoStore).values()) {
-      if (!source.draft || videoStore.analysis(source.key, source.sourceHash)) continue;
+    for (const source of postSources(videoStore, publicWatchVideos(videoStore)).values()) {
+      if (!source.draft || currentPostBias(videoStore, source)) continue;
+      const videoId = source.key.startsWith('video/') ? source.key.slice('video/'.length) : undefined;
+      if (videoId && videoStore.transcriptInput(videoId)?.source === 'gemini-youtube') continue;
       if (activeAnalyses.size && !activeAnalyses.has(source.key)) break;
       const result = await refreshAnalysis(source);
       if (result.status === 503 || result.status === 504) break;
@@ -79,12 +84,21 @@ const server = createServer(async (request, response) => {
     }
     try {
       videoStore ??= openVideoStore();
-      const sources = postSources(videoStore);
+      const sources = postSources(videoStore, publicWatchVideos(videoStore));
       if (listing) {
         const checks = videoStore.factChecks();
+        const automated = videoStore.automatedChecks();
         return sendJson(response, 200, Object.fromEntries([...sources].map(([key, source]) => {
-          const analysis = publicAnalysis(source, videoStore.analysis(key, source.sourceHash));
-          if (key.startsWith('video/')) analysis.factChecks = checks.get(key.slice('video/'.length)) ?? [];
+          const analysis = publicAnalysis(source, currentPostBias(videoStore, source));
+          if (key.startsWith('video/')) {
+            const id = key.slice('video/'.length);
+            const editorial = checks.get(id);
+            const generated = automated.get(id);
+            const current = generated?.sourceHash === source.sourceHash ? generated : undefined;
+            analysis.factChecks = editorial?.length ? editorial : current?.checks ?? [];
+            if (!editorial?.length && current) analysis.factCheckMethod = 'automated';
+            if (videoStore.transcriptInput(id)?.source === 'gemini-youtube') analysis.transcriptMethod = 'automated';
+          }
           return [key, analysis];
         })));
       }
@@ -113,18 +127,24 @@ const server = createServer(async (request, response) => {
     response.writeHead(405, { Allow: 'GET, HEAD' }).end();
     return;
   }
-  if (path === '/api/videos') {
+  const articleId = /^\/api\/articles\/(article-[a-f0-9]{24})$/.exec(path)?.[1];
+  const transcriptId = /^\/api\/videos\/([A-Za-z0-9_-]{11})\/transcript$/.exec(path)?.[1];
+  if (path === '/api/videos' || path === '/api/articles' || articleId || transcriptId) {
     try {
       videoStore ??= openVideoStore();
-      const body = JSON.stringify(videoStore.published());
-      response.writeHead(200, {
+      let result;
+      if (articleId) result = publicArticleDetails(videoStore, articleId);
+      else if (transcriptId) result = publicVideoTranscript(videoStore, transcriptId);
+      else result = path === '/api/videos' ? publicWatchVideos(videoStore) : publicArticles(videoStore);
+      const body = JSON.stringify(result ?? { error: 'Content unavailable.' });
+      response.writeHead(result ? 200 : 404, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store',
         'X-Content-Type-Options': 'nosniff',
       }).end(request.method === 'HEAD' ? undefined : body);
     } catch (error) {
       console.error(error);
-      response.writeHead(503).end('Video feed unavailable');
+      response.writeHead(503).end('Feed unavailable');
     }
     return;
   }

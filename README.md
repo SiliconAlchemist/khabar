@@ -1,6 +1,6 @@
 # Khabar
 
-Khabar is a mobile-first civic news app for Delhi NCR. Each story brings together a short explanation and links to the documents, data, and reporting behind it. The feed has an end.
+Khabar is a mobile-first news app with coverage from India and around the world. Watch carries YouTube news videos. Read combines credited publisher links with Khabar explainers and their supporting sources.
 
 ## Run the demo
 
@@ -24,7 +24,141 @@ If port 4173 is already in use, open the URL first to see whether Khabar is alre
 
 The app includes a web manifest and home-screen icons. Bookmarks and submitted links use local storage. Sample stories live in `public/stories.js`. Add curated YouTube IDs to `public/videos.js` with a title, format, and optional ID of a related written story. Playback uses YouTube’s player and requires internet access.
 
-## Discover YouTube Shorts candidates
+Open **Watch → Explainers** for long-form creator videos. **Read → Explainers** links to original creator articles, transcripts, and book previews. The curated written links live in `public/explainers.js`. A video can link to one of these entries through its `storyId`.
+
+## Load and refresh posts
+
+The ingestion commands use the same SQLite database as the app. Set
+`KHABAR_DATA_DIR` in both terminals to use a different directory.
+
+~~~powershell
+node scripts/sync-posts.js refresh
+node scripts/sync-posts.js status
+~~~
+
+Refresh loads publisher RSS into **Read**, discovers recent YouTube videos for
+the review queue, and checks previously published database videos by ID. Set
+`YOUTUBE_API_KEY` as shown below. Use `--skip-youtube` for an RSS-only run,
+or `--skip-rss` for a YouTube-only run. Use `--channel @HANDLE` more than once
+to select channels and `--limit 5` to cap new candidates per channel.
+Run once from a scheduler or add `--interval-minutes 60` to keep the worker
+running in a separate terminal. A refresh can save results from reachable
+sources during an outage. A failed YouTube request leaves previous records
+available for the next recheck, subject to the feed's 30-day freshness window.
+Pass `--articles` or `--videos` to the refresh command to pick up edits to
+local manifests and their source files on each pass.
+
+Use the batch import to add curated posts and attach source text.
+
+~~~powershell
+node scripts/sync-posts.js import --articles ./data/articles.json --videos ./data/videos.json
+node scripts/sync-posts.js status --limit 10
+~~~
+
+Each manifest is a JSON array. Paths to source text, captions, and media are
+relative to the manifest. Keep the manifests and supplied files in the ignored
+data/ directory.
+
+~~~json
+[
+  {
+    "url": "https://example.com/article",
+    "title": "Example article",
+    "publisher": "Example publisher",
+    "publishedAt": "2026-11-01T12:00:00Z",
+    "textFile": "article.txt",
+    "textScope": "full"
+  }
+]
+~~~
+
+Use `textScope: "excerpt"` for a supplied excerpt, or omit `textFile` for a
+link-only entry. The RSS importer saves publisher descriptions as excerpts.
+Supplied text takes priority on later RSS refreshes. Readers still open the
+article at the publisher.
+
+~~~json
+[
+  {
+    "id": "51J64j1Zdec",
+    "transcriptFile": "captions.vtt"
+  }
+]
+~~~
+
+Reference a video by ID or put its YouTube watch, share, or embed link in `url`. For a new video,
+include `title` and `publisher`, and optionally `durationSeconds` and
+`sourcePublishedAt`. New videos enter the review queue by default. Supply
+`format: "shorts"` or `format: "full"` to publish a reviewed video to Watch.
+Use `transcriptFile` for supplied UTF-8 TXT, SRT, or VTT, or `mediaFile` for
+creator-supplied audio/video processed by local Whisper. The importer keeps
+caption timestamps and reuses the saved transcript when the same input is
+imported again. A failed video row can be fixed and retried independently.
+
+The status command counts full text, excerpts, and missing text for imported
+articles. It also reports transcript coverage for Watch and the review queue.
+
+### Run bias analysis and fact checks locally
+
+Start two llama.cpp servers in separate terminals. With the Windows binaries
+and weights in `data/local-ai`, run these commands from the repo root.
+
+~~~powershell
+# Terminal 1. Liquid AI d1-2B for System One bias analysis.
+& ./data/local-ai/llama/llama-server.exe -m ./data/local-ai/d1-2B-Q4_K_M.gguf --host 127.0.0.1 --port 8080 -c 8192 -b 8192 -ub 8192
+
+# Terminal 2. Qwen3 4B Instruct for extracting and checking claims.
+& ./data/local-ai/llama/llama-server.exe -m ./data/local-ai/qwen3-4b-instruct-2507-q4_k_m.gguf --alias qwen3-4b-instruct-2507 --host 127.0.0.1 --port 8081 -c 8192 -t 4 -np 1
+~~~
+
+The [Qwen GGUF weights](https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/blob/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf)
+are a 2.5 GB download. For a fresh machine with llama.cpp on PATH, use
+`llama-server -hf unsloth/Qwen3-4B-Instruct-2507-GGUF:Q4_K_M --host 127.0.0.1 --port 8081 -c 8192 -t 4 -np 1`
+to fetch and serve them. The d1-2B setup below includes a model download command.
+
+Run the worker against the same `KHABAR_DATA_DIR` as the app.
+
+~~~powershell
+# Check one Watch video or one video in the review queue.
+node scripts/analyze-videos.js --id 51J64j1Zdec
+
+# Refresh feeds, then analyse up to three Watch videos per pass.
+node scripts/sync-posts.js refresh --analyze-videos --interval-minutes 60
+~~~
+
+Both models run locally without API keys for transcripts already in SQLite.
+Set `GEMINI_API_KEY` in the worker environment to automatically transcribe
+public YouTube URLs. Gemini is used only for transcription. YouTube discovery
+uses `YOUTUBE_API_KEY` separately.
+
+System One examines the first 6,000 transcript characters for framing.
+Qwen selects up to two claims from the transcript, sampling the start,
+middle and end for longer videos. It checks those claims against matching
+article text and publisher excerpts stored in SQLite. Fresh RSS imports add
+to the evidence available for new checks. The UI links to cited publishers
+and marks unsupported claims **Unverified**. Existing editorial checks take
+priority.
+
+The worker skips completed stages, processes one video at a time and retries
+failures with backoff. Known videos longer than 30 minutes are skipped by
+default unless a transcript already exists. Change the bounds with
+`--limit` and `--max-duration-minutes`. The YouTube URL input is a Gemini
+preview feature and is limited to public videos. Videos it cannot process
+remain without a transcript. Reload Watch to see completed results.
+
+### Refresh the Read feed separately
+
+Run the article importer for the local demo with Python 3 installed:
+
+```powershell
+node scripts/sync-articles.js
+```
+
+The importer reads publisher RSS feeds and stores the headline, publisher, available byline, publication date, and original link in the same SQLite database as Watch. It deduplicates links and keeps previous entries if a publisher feed is unavailable. Refresh Read to see the latest 200 entries. The static demo includes the hand-written explainers. Run the Node server to serve the imported articles.
+
+To load a curated batch, use `node scripts/sync-articles.js --file articles.json`. The file is an array with `url`, `title`, `publisher`, and `publishedAt` for each article. Include `author` when available, `topic` for filtering, and an optional original `summary`. Readers open the full article at the publisher.
+
+## Discover YouTube candidates
 
 Enable YouTube Data API v3 in Google Cloud, then run discovery from PowerShell:
 
@@ -33,7 +167,7 @@ $env:YOUTUBE_API_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'YouTu
 node ./scripts/discover-youtube.js --limit 5
 ```
 
-The default lineup includes Ravish Kumar, Faye D'Souza, Unfiltered by Samdish, Barkha Dutt's Mojo Story, Peek TV, Newslaundry, NDTV India, and The Indian Express. The limit is per channel. To choose your own lineup, repeat `--channel` with handles or channel IDs:
+The default lineup includes independent Indian channels and international sources such as Al Jazeera English, BBC News, DW News, France 24, CNA, NHK World-Japan, SABC News, and CNN Brasil. The limit is per channel. To choose sources, repeat `--channel` with handles or channel IDs:
 
 ```powershell
 node ./scripts/discover-youtube.js --channel '@fayedsouza' --channel '@indianexpress' --limit 5
@@ -41,7 +175,7 @@ node ./scripts/discover-youtube.js --channel '@fayedsouza' --channel '@indianexp
 
 Keep real keys in the worker's `YOUTUBE_API_KEY` environment variable. Command-line arguments can appear in local process listings. Multiple channels print one JSON object per channel, one per line. A single channel prints a formatted JSON object. Channel failures go to stderr, and the exit code is nonzero if any channel fails.
 
-Candidates are public, embeddable uploads up to three minutes long that are available in India. Review them on YouTube for news relevance and Shorts format, then add the clips you choose to `public/videos.js`. Use `format: 'shorts'` for Shorts and `format: 'full'` for longer videos.
+By default, discovery returns public, embeddable uploads up to three minutes long. Pass `--include-full` to also discover longer videos. Playback is subject to each video's regional availability. Review the video and select `shorts` or `full` when publishing to Watch.
 
 ## Keep the video queue fresh
 
@@ -49,7 +183,7 @@ Start the server in your own terminal with `node server.js`. In a separate Power
 
 ```powershell
 $env:YOUTUBE_API_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'YouTube Data API key' -AsSecureString)).Password
-node .\scripts\sync-youtube.js sync --limit 5
+node .\scripts\sync-youtube.js sync --limit 5 --include-full
 node .\scripts\sync-youtube.js queue
 ```
 
@@ -64,7 +198,7 @@ Refresh **Watch** to see the published clip. Use `unpublish VIDEO_ID` to return 
 
 To keep syncing while the computer is on, run `node scripts/sync-youtube.js sync --interval-minutes 60` in the worker terminal. The worker and server share `data/khabar.sqlite`. They can also use the same directory configured with `KHABAR_DATA_DIR`. The server does not need the YouTube key.
 
-On a cloud host, place that directory on a persistent volume shared by the server and worker on the same machine. Use the foreground worker or schedule the one-shot `sync` command. Sync updates recent candidates and rechecks published clips. Source metadata expires after 30 days without a successful check. Written stories are edited in `public/stories.js`.
+On a cloud host, place that directory on a persistent volume shared by the server and worker on the same machine. Use the foreground worker or schedule the one-shot `sync` command. Sync updates recent candidates and rechecks published clips. Pending candidates expire after 30 days without a successful check. Older published database clips are hidden until rechecked. Written stories are edited in `public/stories.js`.
 
 ## Bias review
 

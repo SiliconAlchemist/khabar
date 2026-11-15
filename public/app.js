@@ -1,12 +1,19 @@
-import { stories } from './stories.js';
-import { videos as seedVideos, youtubeIdFromUrl, youtubeUrl } from './videos.js';
+import { stories as editorialStories } from './stories.js';
+import { explainers } from './explainers.js';
+import { youtubeIdFromUrl, youtubeUrl } from './videos.js';
 import { createPlaybackController } from './playback.js';
 import { mountBiasReview, readBiasLabel } from './bias.js';
+import { renderArticleReader } from './article-reader.js';
 
-const [videos, postAnalyses] = await Promise.all([loadVideos(), loadPostAnalyses()]);
+const [videos, postAnalyses, articles] = await Promise.all([loadVideos(), loadPostAnalyses(), loadArticles()]);
+const explainerUrls = new Set(explainers.map(explainer => explainer.url));
+const stories = [
+  ...articles.filter(article => !explainerUrls.has(article.originalUrl)),
+  ...explainers.map(explainer => externalStory({ ...explainer, topic: 'Explainers' })),
+  ...editorialStories,
+];
 const main = document.querySelector('main');
 const playback = createPlaybackController(main);
-const topicNames = ['All', ...new Set(stories.map(story => story.topic))];
 const videoDate = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' });
 const paths = {
   play: '<path d="m9 6 10 6-10 6z" fill="currentColor" stroke="none"/>',
@@ -36,22 +43,13 @@ async function loadVideos() {
   try {
     const endpoint = new URL('./api/videos', import.meta.url);
     const response = await fetch(endpoint, { signal: AbortSignal.timeout(2500) });
-    if (!response.ok) return seedVideos;
+    if (!response.ok) return [];
     const published = await response.json();
-    if (!Array.isArray(published)) return seedVideos;
-
-    const seeds = new Map(seedVideos.map(video => [video.id, video]));
-    const catalog = [];
-    for (const video of published) {
-      if (!video || !/^[A-Za-z0-9_-]{11}$/.test(video.id) || typeof video.title !== 'string'
-        || !['shorts', 'full'].includes(video.format)) continue;
-      const seed = seeds.get(video.id);
-      seeds.delete(video.id);
-      catalog.push({ ...seed, ...video, storyId: video.storyId ?? seed?.storyId });
-    }
-    return [...catalog, ...seeds.values()];
+    if (!Array.isArray(published)) return [];
+    return published.filter(video => video?.hasTranscript === true && /^[A-Za-z0-9_-]{11}$/.test(video.id)
+      && typeof video.title === 'string' && ['shorts', 'full'].includes(video.format) && ['en', 'hi'].includes(video.language));
   } catch {
-    return seedVideos;
+    return [];
   }
 }
 
@@ -65,6 +63,31 @@ async function loadPostAnalyses() {
   return {};
 }
 
+async function loadArticles() {
+  try {
+    const response = await fetch(new URL('./api/articles', import.meta.url), { signal: AbortSignal.timeout(2500) });
+    if (!response.ok) return [];
+    const entries = await response.json();
+    if (!Array.isArray(entries)) return [];
+    return entries.flatMap(entry => {
+      if (!entry || !/^article-[a-f0-9]{24}$/.test(entry.id)
+        || !['title', 'publisher', 'author', 'topic', 'summary', 'publishedAt'].every(key => typeof entry[key] === 'string')
+        || !Number.isFinite(Date.parse(entry.publishedAt)) || !['en', 'hi'].includes(entry.language)) return [];
+      const url = normalizedUrl(entry.url);
+      if (!url?.startsWith('https://')) return [];
+      return [externalStory({ ...entry, url })];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function externalStory(entry) {
+  const { publisher, title, url, linkLabel } = entry;
+  return { ...entry, originalUrl: url,
+    sources: [{ type: linkLabel ?? 'Original article', publisher, title, url }] };
+}
+
 function escapeHtml(value) {
   const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   return String(value).replace(/[&<>"']/g, character => entities[character]);
@@ -76,16 +99,16 @@ const analysisLabels = {
 };
 
 function analysisLabel(result) {
-  if (result.status === 'needs-transcript') return 'Transcript needed';
-  if (result.status === 'pending') return 'Analysis pending';
+  if (result.status !== 'complete') return 'Analysis pending';
+  if (!['left', 'right', 'mixed'].includes(result.label) && result.language === 'author') return 'Loaded wording flagged';
   return analysisLabels[result.label] ?? 'Inconclusive';
 }
 
 function analysisNotes(result) {
-  if (result.status === 'needs-transcript') return '<p>Analysis will start when a transcript is available.</p>';
-  if (result.status === 'pending') return '<p>Khabar will analyse the source text in the background.</p>';
-  return `<p>Automated assessment by d1-2B${result.truncated ? ' · First 6,000 characters' : ''}</p>
+  if (result.status !== 'complete') return '<p>Bias analysis is pending.</p>';
+  return `<p>Automated assessment by ${escapeHtml(result.model ?? 'd1-2B')}${result.truncated ? ' · First 6,000 characters' : ''}${result.transcriptMethod === 'automated' ? ' · Machine transcript' : ''}</p>
     ${result.framingEvidence ? `<blockquote>${escapeHtml(result.framingEvidence)}</blockquote>` : ''}
+    ${result.advocacy === 'advocates' ? '<p>The speaker or author advocates a policy position.</p>' : ''}
     ${result.allegation === 'yes' ? '<p>The headline may present an attributed allegation as fact.</p>' : ''}
     ${result.language === 'author' ? '<p>The model flagged loaded wording in the author’s voice.</p>' : ''}
     ${result.evidence && result.evidence !== result.framingEvidence ? `<blockquote>${escapeHtml(result.evidence)}</blockquote>` : ''}`;
@@ -146,7 +169,7 @@ const submissionKey = 'khabar:submissions';
 const saved = new Set(readStorage(savedKey));
 const followingKey = 'khabar:following';
 const following = new Set(readStorage(followingKey));
-const sheetTitles = { fact: 'Fact-Check', sources: 'Sources', label: 'Why this label?' };
+const sheetTitles = { fact: 'Fact-Check', sources: 'Sources', label: 'Why this label?', transcript: 'Transcript' };
 const factVerdicts = { supported: 'Supported', contradicted: 'Contradicted', 'needs-context': 'Needs context', unverified: 'Unverified' };
 const submissions = readStorage(submissionKey);
 let activeTopic = 'All';
@@ -202,10 +225,14 @@ function followButton(key) {
   return `<button class="post-action" type="button" data-follow="${key}" aria-pressed="${following.has(key)}">${following.has(key) ? icon('check') + ' Following' : icon('plus') + ' Follow'}</button>`;
 }
 
-function cardActions(key) {
+function cardActions(key, video) {
+  const transcriptUrl = video?.transcriptUrl && normalizedUrl(video.transcriptUrl);
   return `<div class="post-actions">
     <button class="post-action fact-action" type="button" data-sheet="fact" data-key="${key}">${icon('fact')} Fact-Check</button>
     <button class="post-action" type="button" data-sheet="sources" data-key="${key}">${icon('external')} View Source</button>
+    ${video?.hasReadableTranscript
+      ? `<button class="post-action" type="button" data-sheet="transcript" data-key="${key}">${icon('file')} Transcript</button>`
+      : transcriptUrl ? `<a class="post-action" href="${escapeHtml(transcriptUrl)}" target="_blank" rel="noopener noreferrer">${icon('file')} Transcript</a>` : ''}
     ${followButton(key)}
   </div>`;
 }
@@ -226,7 +253,7 @@ function videoCard(video, autoplay = false) {
   const sourceDate = Date.parse(video.sourcePublishedAt);
   const date = Number.isFinite(sourceDate) ? videoDate.format(sourceDate) : '';
   const duration = durationLabel(video.durationSeconds);
-  return `<article class="video-card${video.format === 'shorts' ? ' video-card-portrait' : ''}" id="video-${video.id}" tabindex="-1">
+  return `<article class="video-card${video.format === 'shorts' ? ' video-card-portrait' : ''}" id="video-${video.id}" lang="${video.language}" tabindex="-1">
     ${publisherLine(video.publisher || 'YouTube', [story?.topic, date].filter(Boolean).map(escapeHtml).join(' · '), key)}
     <div class="video-frame">
       <button class="video-preview" type="button" data-play="${video.id}"${autoplay ? ' data-autoplay' : ''} aria-label="Play ${title}">
@@ -238,24 +265,25 @@ function videoCard(video, autoplay = false) {
     ${biasStrip(key)}
     <h2>${title}</h2>
     ${video.summary ? `<p class="post-summary">${escapeHtml(video.summary)}</p>` : ''}
-    ${cardActions(key)}
-    ${story ? `<a class="story-link compare-link" href="${storyUrl(story, video)}">${icon('feed')} Read this story <span>Compare coverage ${icon('arrow')}</span></a>` : ''}
+    ${cardActions(key, video)}
+    ${story ? `<a class="story-link compare-link" href="${storyUrl(story, video)}">${icon('feed')} ${story.originalUrl ? 'Read the companion piece' : 'Read this story <span>Compare coverage ' + icon('arrow') + '</span>'}</a>` : ''}
   </article>`;
 }
 
-function watchPage(format) {
-  const list = videos.filter(video => video.format === format);
+function watchPage(format, onlyExplainers) {
+  const list = videos.filter(video => video.format === format && (!onlyExplainers || video.explainer));
   main.innerHTML = `<div class="watch-heading">
       <h1>Watch</h1>
       <nav class="watch-formats" aria-label="Video format">
-        <a href="#watch"${format === 'shorts' ? ' aria-current="page"' : ''}>Shorts</a>
-        <a href="#watch/full"${format === 'full' ? ' aria-current="page"' : ''}>Full videos</a>
+        <a href="#watch/shorts"${format === 'shorts' ? ' aria-current="page"' : ''}>Shorts</a>
+        <a href="#watch/full"${format === 'full' && !onlyExplainers ? ' aria-current="page"' : ''}>Full videos</a>
+        <a href="#watch/explainers"${onlyExplainers ? ' aria-current="page"' : ''}>Explainers</a>
       </nav>
     </div>
-    <section class="video-list" aria-label="${format === 'shorts' ? 'YouTube Shorts' : 'Full videos'}">
+    <section class="video-list" aria-label="${onlyExplainers ? 'Explainers' : format === 'shorts' ? 'YouTube Shorts' : 'Full videos'}">
       ${list.map(video => videoCard(video, true)).join('')}
     </section>
-    <p class="caught-up">${icon('check')} You're caught up.</p>`;
+    ${list.length ? `<p class="caught-up">${icon('check')} You're caught up.</p>` : '<p class="empty">No videos are available in this format yet.</p>'}`;
 }
 
 function bookmark(story) {
@@ -265,6 +293,20 @@ function bookmark(story) {
 
 function card(story, lead = false) {
   const key = storyKey(story);
+  if (story.originalUrl) {
+    const byline = [story.author, story.topic, publicationDate(story)].filter(Boolean);
+    return `<article class="story-card"${story.language ? ` lang="${story.language}"` : ''}>
+      ${publisherLine(story.publisher, byline.map(escapeHtml).join(' · '), key)}
+      <h2><a href="${storyUrl(story)}">${escapeHtml(story.title)}</a></h2>
+      ${story.summary ? `<p class="post-summary">${escapeHtml(story.summary)}</p>` : ''}
+      <div class="post-actions article-actions">
+        ${story.hasFullText || story.hasExcerpt
+          ? `<a class="post-action" href="${storyUrl(story)}">${icon('file')} ${story.hasFullText ? 'Read article' : 'Read excerpt'}</a>`
+          : `<a class="post-action" href="${escapeHtml(story.originalUrl)}" target="_blank" rel="noopener noreferrer">${icon('external')} ${escapeHtml(story.linkLabel ?? 'Read original')}</a>`}
+        ${followButton(key)}
+      </div>
+    </article>`;
+  }
   return `<article class="story-card${lead ? ' lead-card' : ''}">
     ${publisherLine('Khabar', escapeHtml(story.topic), key)}
     ${lead ? `<div class="lead-art">
@@ -284,9 +326,12 @@ function renderStoryList(container, list) {
   if (leadImage?.complete && !leadImage.naturalWidth) leadImage.parentElement.hidden = true;
 }
 
-function feed(onlyFollowing = false) {
+function feed(onlyFollowing = false, publisherLinks = false) {
+  const topicNames = ['All', ...new Set(stories.filter(story => isReadFeedStory(story, publisherLinks)).map(story => story.topic))];
+  if (!topicNames.includes(activeTopic)) activeTopic = 'All';
   main.innerHTML = `<nav class="feed-tabs" aria-label="Read feed">
-    <a href="#feed"${onlyFollowing ? '' : ' aria-current="page"'}>For you</a>
+    <a href="#feed"${onlyFollowing || publisherLinks ? '' : ' aria-current="page"'}>Full articles</a>
+    <a href="#feed/publishers"${publisherLinks ? ' aria-current="page"' : ''}>Publisher links</a>
     <a href="#feed/following"${onlyFollowing ? ' aria-current="page"' : ''}>Following</a>
   </nav>
   ${onlyFollowing ? '' : `<div class="topic-bar" role="group" aria-label="Filter by topic">
@@ -302,17 +347,62 @@ function feed(onlyFollowing = false) {
   }
 }
 
+function isReadFeedStory(story, publisherLinks) {
+  return publisherLinks ? Boolean(story.originalUrl && !story.hasFullText) : !story.originalUrl || story.hasFullText;
+}
+
 function updateFeed() {
-  const list = activeTopic === 'All' ? stories : stories.filter(story => story.topic === activeTopic);
-  renderStoryList(main.querySelector('.story-list'), list);
+  const publisherLinks = location.hash === '#feed/publishers';
+  const list = stories.filter(story => isReadFeedStory(story, publisherLinks) && (activeTopic === 'All' || story.topic === activeTopic));
+  const container = main.querySelector('.story-list');
+  if (list.length) renderStoryList(container, list);
+  else container.innerHTML = '<p class="empty">No articles in this topic yet.</p>';
+}
+
+async function loadReadableContent(path, container) {
+  if (!container) return;
+  try {
+    const response = await fetch(new URL(path, import.meta.url), { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error('Content unavailable.');
+    const body = renderArticleReader(await response.json());
+    if (!body) throw new Error('Content unavailable.');
+    if (container.isConnected) container.innerHTML = body;
+  } catch {
+    if (container.isConnected) container.innerHTML = '<p class="note">Could not load the text. Use the publisher link to read it.</p>';
+  }
 }
 
 function storyPage(story, fromVideo) {
   const relatedVideos = videos.filter(video => video.storyId === story.id);
+  if (story.originalUrl) {
+    const byline = [story.publisher, story.author, publicationDate(story)].filter(Boolean);
+    main.innerHTML = `<article class="story-page"${story.language ? ` lang="${story.language}"` : ''}>
+      <a class="back-link" href="${fromVideo ? videoUrl(fromVideo) : '#feed'}">${icon('back')} ${fromVideo ? 'Back to video' : 'Back to stories'}</a>
+      <div class="page-intro">
+        <p class="eyebrow">${escapeHtml(story.topic)}</p>
+        <h1>${escapeHtml(story.title)}</h1>
+        <p>${byline.map(escapeHtml).join(' · ')}</p>
+        ${story.summary ? `<p>${escapeHtml(story.summary)}</p>` : ''}
+      </div>
+      <div class="story-actions">
+        ${bookmark(story)}
+        <button class="outline-button" type="button" data-share="${story.id}">${icon('share')} Share story</button>
+      </div>
+      <p id="story-status" class="status" role="status"></p>
+      ${story.hasFullText || story.hasExcerpt ? '<div data-readable-content><p class="note">Loading article…</p></div>' : ''}
+      ${relatedVideos.map(video => `<a class="story-link related-video" href="${videoUrl(video)}">${icon('play')} Watch the video</a>`).join('')}
+      <section class="sources" aria-labelledby="source-heading">
+        <h2 id="source-heading">Read at the publisher</h2>
+        ${sourceList(story.sources)}
+      </section>
+    </article>`;
+    void loadReadableContent(`./api/articles/${story.id}`, main.querySelector('[data-readable-content]'));
+    return;
+  }
   main.innerHTML = `<article class="story-page">
     <a class="back-link" href="${fromVideo ? videoUrl(fromVideo) : '#feed'}">${icon('back')} ${fromVideo ? 'Back to video' : 'Back to stories'}</a>
     <div class="page-intro">
-      <p class="eyebrow">Delhi NCR <span>·</span> ${story.topic}</p>
+      <p class="eyebrow">Khabar <span>·</span> ${story.topic}</p>
       <h1>${story.title}</h1>
       <p>${story.summary}</p>
     </div>
@@ -338,6 +428,11 @@ function storyPage(story, fromVideo) {
   </article>`;
 }
 
+function publicationDate(story) {
+  const date = Date.parse(story.publishedAt);
+  return Number.isFinite(date) ? videoDate.format(date) : '';
+}
+
 function collectionPage(title, store, emptyMessage) {
   const storyList = stories.filter(story => store.has(story.id) || store.has(storyKey(story)));
   const videoList = videos.filter(video => store.has(videoKey(video)));
@@ -358,7 +453,7 @@ function discoverPage() {
 function updateDiscovery(query) {
   const matches = (...fields) => query.toLowerCase().trim().split(/\s+/)
     .every(word => fields.filter(Boolean).join(' ').toLowerCase().includes(word));
-  const storyMatches = stories.filter(story => matches(story.title, story.topic, story.summary));
+  const storyMatches = stories.filter(story => matches(story.title, story.topic, story.summary, story.publisher, story.author));
   const videoMatches = videos.filter(video => matches(video.title, video.publisher, video.summary));
   const results = main.querySelector('.discover-results');
   results.innerHTML = `${storyMatches.length ? `<section class="story-list" aria-label="Matching stories">${storyMatches.map(story => card(story)).join('')}</section>` : ''}
@@ -382,7 +477,8 @@ function openStorySheet(key, sheet, trigger) {
     const videoSource = video ? [{ type: 'Original video', publisher: video.publisher ?? 'YouTube', title: video.title, url: youtubeUrl(video) }] : [];
     body = sourceList([...videoSource, ...(story?.sources ?? [])]);
   } else if (sheet === 'fact') {
-    const checks = video ? postAnalyses[key]?.factChecks ?? [] : story.factChecks ?? [];
+    const analysis = video && postAnalyses[key];
+    const checks = video ? analysis?.factChecks ?? [] : story.factChecks ?? [];
     const factChecks = checks.map(check => `<section class="video-fact-check">
       <p class="topic">${factVerdicts[check.verdict]}</p>
       <h3>${escapeHtml(check.claim)}</h3>
@@ -390,13 +486,19 @@ function openStorySheet(key, sheet, trigger) {
       <p>${escapeHtml(check.explanation)}</p>
       ${check.sources.length ? sourceList(check.sources.map(source => ({ ...source, type: 'Evidence' }))) : ''}
     </section>`).join('');
-    body = `${factChecks || (video ? '<p>No claim-level fact check is available for this video yet.</p>' : '')}
-    ${story ? `<div class="context">
+    const automated = analysis?.factCheckMethod === 'automated';
+    body = `${automated ? '<p class="note">AI-generated fact check. Open the evidence to verify each verdict.</p>' : ''}
+    ${factChecks || (video ? `<p>${automated ? 'The automated check found no independently checkable claim.' : 'No claim-level fact check is available for this video yet.'}</p>` : '')}
+    ${story && !story.originalUrl ? `<div class="context">
       ${video ? '<h3>Related story context</h3>' : ''}
       <h3>What to know</h3><p>${escapeHtml(story.context)}</p>
       <h3>What to look into</h3><p>${escapeHtml(story.question)}</p>
     </div>` : ''}
     ${story ? sourceList(story.sources) : ''}`;
+  } else if (sheet === 'transcript' && video?.hasReadableTranscript) {
+    const original = normalizedUrl(video.transcriptUrl);
+    body = `<div data-readable-content><p class="note">Loading transcript…</p></div>
+      ${original ? `<a class="story-link" href="${escapeHtml(original)}" target="_blank" rel="noopener noreferrer">View original transcript ${icon('external')}</a>` : ''}`;
   } else if (sheet === 'menu') {
     const pressed = saved.has(video ? key : id);
     body = `<button class="outline-button" type="button" data-save="${video ? key : id}" aria-pressed="${pressed}">${pressed ? 'Remove from Saved' : 'Save for later'}</button>
@@ -424,6 +526,9 @@ function openStorySheet(key, sheet, trigger) {
   });
   main.append(dialog);
   dialog.showModal();
+  if (sheet === 'transcript' && video?.hasReadableTranscript) {
+    void loadReadableContent(`./api/videos/${video.id}/transcript`, dialog.querySelector('[data-readable-content]'));
+  }
 }
 
 function sourceList(sources) {
@@ -442,7 +547,6 @@ main.addEventListener('input', event => {
 
 function submitPage() {
   main.innerHTML = `<div class="page-intro">
-    <p class="eyebrow">Delhi NCR <span>·</span> Demo edition</p>
     <h1>Submit a link</h1>
     <p>Add an article, reel, or video you want to see covered.</p>
   </div>
@@ -628,8 +732,11 @@ function render({ moveFocus = false, previousHash = '' } = {}) {
   const fromVideo = story && contextVideo(location.hash);
   const video = videos.find(item => route === `watch/${item.id}`);
   const biasVideo = videos.find(item => route === `bias/${item.id}`);
-  const isWatch = !route || route === 'watch' || route === 'watch/full' || Boolean(video);
-  const watchFormat = video?.format ?? (route === 'watch/full' ? 'full' : 'shorts');
+  const onlyExplainers = route === 'watch/explainers';
+  const isWatch = !route || route === 'watch' || route.startsWith('watch/');
+  const defaultFormat = videos.some(item => item.format === 'shorts') ? 'shorts' : 'full';
+  const watchFormat = video?.format ?? (route === 'watch/full' || onlyExplainers ? 'full'
+    : route === 'watch/shorts' ? 'shorts' : defaultFormat);
   let activePage = 'feed';
   if (isWatch || fromVideo) activePage = 'watch';
   else if (route === 'bias' || biasVideo) activePage = 'bias';
@@ -639,13 +746,13 @@ function render({ moveFocus = false, previousHash = '' } = {}) {
     else link.removeAttribute('aria-current');
   }
   if (story) storyPage(story, fromVideo);
-  else if (isWatch) watchPage(watchFormat);
+  else if (isWatch) watchPage(watchFormat, onlyExplainers);
   else if (activePage === 'bias') mountBiasReview(main, { videos, videoId: biasVideo?.id });
   else if (activePage === 'saved') collectionPage('Saved', saved, 'Your bookmarks will appear here.');
   else if (activePage === 'following') collectionPage('Following', following, 'Stories and videos you follow will appear here.');
   else if (activePage === 'discover') discoverPage();
   else if (activePage === 'submit') submitPage();
-  else feed(route === 'feed/following');
+  else feed(route === 'feed/following', route === 'feed/publishers');
   const pageTitles = { watch: 'Watch', bias: 'Bias review', saved: 'Saved', submit: 'Submit a link', feed: 'Read', following: 'Following', discover: 'Discover' };
   const title = story?.title ?? video?.title ?? pageTitles[activePage];
   document.title = `${title} · Khabar`;
@@ -655,7 +762,7 @@ function render({ moveFocus = false, previousHash = '' } = {}) {
   }
   const returningTo = isWatch && contextVideo(previousHash);
   const targetVideo = video ?? (returningTo?.format === watchFormat ? returningTo : undefined);
-  if (targetVideo) {
+  if (targetVideo && (!onlyExplainers || targetVideo.explainer)) {
     const card = document.getElementById(`video-${targetVideo.id}`);
     card.scrollIntoView({ block: 'start' });
     if (moveFocus) card.focus({ preventScroll: true });

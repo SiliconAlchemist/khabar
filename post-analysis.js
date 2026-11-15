@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { analyseDraft, maxDraftLength } from './bias-analyser.js';
+import { analyseDraft, biasAnalysisVersion, maxDraftLength } from './bias-analyser.js';
 import { stories } from './public/stories.js';
 import { videos } from './public/videos.js';
 
@@ -14,13 +14,17 @@ export function analysisSource(kind, post, transcript = '') {
   return { key: `${kind}/${post.id}`, headline, draft, truncated, sourceHash };
 }
 
-export function postSources(store) {
+export function postSources(store, visibleVideos) {
   const transcripts = store.transcripts();
-  const published = new Map(videos.map(video => [video.id, video]));
-  for (const video of store.published()) published.set(video.id, video);
+  let published = visibleVideos;
+  if (published === undefined) {
+    const merged = new Map(videos.map(video => [video.id, video]));
+    for (const video of store.published()) merged.set(video.id, video);
+    published = merged.values();
+  }
 
   const sources = stories.map(story => analysisSource('story', story));
-  for (const video of published.values()) {
+  for (const video of published) {
     sources.push(analysisSource('video', video, transcripts.get(video.id)));
   }
   return new Map(sources.map(source => [source.key, source]));
@@ -32,12 +36,17 @@ export function publicAnalysis(source, saved) {
   return { status: 'complete', ...saved };
 }
 
-export async function runPostAnalysis(store, source) {
+export function currentPostBias(store, source) {
+  const saved = store.analysis(source.key, source.sourceHash);
+  return saved?.biasVersion === biasAnalysisVersion ? saved : undefined;
+}
+
+export async function runPostAnalysis(store, source, options) {
   const startedAt = Date.now();
-  const result = await analyseDraft(source.headline, source.draft);
+  const result = await analyseDraft(source.headline, source.draft, options);
   if (result.status !== 200) return result;
 
   const findings = { ...result.body, truncated: source.truncated };
   store.saveAnalysis(source.key, source.sourceHash, findings, startedAt);
-  return { status: 200, body: publicAnalysis(source, store.analysis(source.key, source.sourceHash)) };
+  return { status: 200, body: publicAnalysis(source, currentPostBias(store, source)) };
 }

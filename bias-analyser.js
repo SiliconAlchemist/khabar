@@ -1,24 +1,46 @@
 const maxBodyBytes = 32 * 1024;
 export const maxDraftLength = 6000;
+export const biasAnalysisVersion = 2;
 const modelUrl = 'http://127.0.0.1:8080/v1/systemone';
 const segmenter = new Intl.Segmenter(undefined, { granularity: 'sentence' });
+const wordSegmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
 const decisions = {
   allegation: {
     instructions: 'Does the headline state an allegation as an established fact while the article or transcript attributes it to a source? Select inconclusive if there is no headline or too little context.',
     criteria: { yes: 'An attributed allegation appears as established fact', no: 'No such mismatch', inconclusive: 'Insufficient information' },
   },
   language: {
-    instructions: "Where does the clearest loaded or judgmental wording appear? Distinguish the journalist's own voice from attributed speech. Use inconclusive if attribution is unclear.",
-    criteria: { author: "Journalist's own wording", quoted: 'Attributed to another speaker', none: 'No clear example', inconclusive: 'Insufficient information' },
+    instructions: "Decide if the headline or the narrator's own statements use emotionally charged, derogatory, or moralizing words to cast a person, group or policy in a positive or negative light. The headline is the publisher’s own wording unless clearly identified as a quotation. Wording explicitly attributed to a named or unnamed third party is that person’s wording. Factual descriptions and empirical findings alone are not emotionally loaded.",
+    criteria: {
+      author: 'The author uses charged or judgmental wording in their own narration or headline, even if some other charged wording is quoted',
+      quoted: 'Only a quoted or explicitly attributed source uses charged wording',
+      none: 'No clearly loaded wording appears',
+      inconclusive: 'Too little evidence to tell who used the loaded wording',
+    },
   },
-  framing: {
-    instructions: "Assess the author's own political framing in its local context. A quote, criticism of an official, or support for a party alone cannot establish a left or right lean. Select inconclusive if the context is missing or a left-right axis fits poorly. Select none when there is enough text and no clear lean.",
-    criteria: { left: 'Clear left-leaning framing', right: 'Clear right-leaning framing', mixed: 'Clear framing in both directions', none: 'No clear political lean', inconclusive: 'Insufficient evidence or unsuitable axis' },
+  advocacy: {
+    instructions: 'Is the publisher or narrator using its own wording to express a definite opinion or push for a position on a contested political topic, beyond describing the event or attributing the views of others?',
+    criteria: {
+      advocates: 'The writer is arguing for or against a political policy or value in their own voice',
+      descriptive: 'The writer is describing events or reporting what another person says',
+      uncertain: 'Insufficient context or unclear attribution',
+    },
+  },
+  direction: {
+    instructions: "Which substantive political view does the narrator argue FOR? Evaluate what the narrator argues to be desirable, independently of the viewpoint being criticized or attributed to someone else. Use only stated framing, including support or opposition clearly implied by the narrator's wording. Choose neither when the local political context prevents a clear left-right interpretation.",
+    criteria: {
+      reallocates_wealth: 'The narrator advocates reducing economic inequality, strengthening workers’ power, increasing public welfare, or expanding civil or migrant rights',
+      emphasizes_order: 'The narrator advocates limiting redistribution, lower regulation, traditional social order, more restrictive immigration, or stronger border enforcement or deportation',
+      both: 'The narrator makes clear arguments in both of these directions',
+      neither: 'The narrator does not adopt either recognizable political position, or the context is insufficient',
+    },
   },
 };
 
-function sourcePassages(headline, draft) {
-  const passages = headline ? { headline } : {};
+const directions = { reallocates_wealth: 'left', emphasizes_order: 'right', both: 'mixed' };
+
+function sourcePassages(draft) {
+  const passages = {};
   let start = 0;
   let count = 0;
   for (const { index } of segmenter.segment(draft)) {
@@ -28,6 +50,23 @@ function sourcePassages(headline, draft) {
   }
   passages[`passage_${++count}`] = draft.slice(start).trim();
   return passages;
+}
+
+function hasConfidence(answer, minimum, margin) {
+  const confidence = answer.probabilities?.[answer.choice];
+  const alternatives = Object.entries(answer.probabilities ?? {})
+    .filter(([choice]) => choice !== answer.choice)
+    .map(([, probability]) => probability);
+  return Number.isFinite(confidence) && confidence >= minimum && confidence - Math.max(0, ...alternatives) >= margin;
+}
+
+function evidenceExcerpt(passage) {
+  if (!passage) return null;
+  let remaining = 12;
+  for (const { index, isWordLike } of wordSegmenter.segment(passage)) {
+    if (isWordLike && remaining-- === 0) return passage.slice(0, index).trimEnd() + '…';
+  }
+  return passage;
 }
 
 export function sendJson(response, status, result) {
@@ -79,8 +118,10 @@ export async function handleBiasAnalysis(request, response, port) {
   return send(response, result.status, result.body);
 }
 
-export async function analyseDraft(headline, draft) {
-  const passages = sourcePassages(headline, draft);
+export async function analyseDraft(headline, draft, { fetchImpl = fetch } = {}) {
+  const model = 'd1-2B';
+  const bodyPassages = sourcePassages(draft);
+  const passages = headline ? { headline, ...bodyPassages } : bodyPassages;
   const evidenceCriteria = Object.fromEntries(Object.keys(passages).map(id => [id, `The source passage numbered ${id}`]));
   evidenceCriteria.none = 'No source passage clearly supports the finding';
   const questions = {
@@ -98,34 +139,37 @@ export async function analyseDraft(headline, draft) {
   };
 
   try {
-    const result = await fetch(modelUrl, {
+    const result = await fetchImpl(modelUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state: { passages }, questions }),
+      body: JSON.stringify({ state: { headline, passages: bodyPassages }, questions }),
       redirect: 'error',
       signal: AbortSignal.timeout(60_000),
     });
-    if (!result.ok) return { status: 502, body: { error: `The local analyser returned HTTP ${result.status}. Check the llama.cpp terminal.` } };
+    if (!result.ok) return { status: 502, body: { error: `The ${model} analyser returned HTTP ${result.status}.` } };
     const { answers } = await result.json();
-    const allegation = answers?.allegation?.choice;
-    const language = answers?.language?.choice;
-    const evidence = answers?.evidence?.choice;
-    const framing = answers?.framing?.choice;
-    const framingEvidence = answers?.framingEvidence?.choice;
-    if (!Object.hasOwn(decisions.allegation.criteria, allegation) || !Object.hasOwn(decisions.language.criteria, language) || !Object.hasOwn(decisions.framing.criteria, framing) || !Object.hasOwn(evidenceCriteria, evidence) || !Object.hasOwn(evidenceCriteria, framingEvidence)) {
-      return { status: 502, body: { error: 'The local analyser returned an unexpected decision.' } };
+    if (Object.entries(questions).some(([id, question]) => !Object.hasOwn(question.criteria, answers?.[id]?.choice))) {
+      return { status: 502, body: { error: `The ${model} analyser returned an unexpected decision.` } };
     }
-    const directional = ['left', 'right', 'mixed'].includes(framing);
-    const quote = directional && framingEvidence !== 'none' ? passages[framingEvidence] : null;
+    const advocacy = hasConfidence(answers.advocacy, 0.6, 0.15) ? answers.advocacy.choice : 'uncertain';
+    const direction = directions[answers.direction.choice];
+    const directional = direction && hasConfidence(answers.direction, 0.55, 0.15);
+    const framingEvidence = advocacy === 'advocates' && directional
+      ? evidenceExcerpt(passages[answers.framingEvidence.choice]) : null;
+    const language = hasConfidence(answers.language, 0.5, 0.12) ? answers.language.choice : 'inconclusive';
+    const evidence = language === 'author' ? evidenceExcerpt(passages[answers.evidence.choice]) : null;
     return { status: 200, body: {
-      label: directional && !quote ? 'inconclusive' : framing,
-      framingEvidence: quote,
-      allegation: headline ? allegation : 'inconclusive',
-      language,
-      evidence: language === 'author' && evidence !== 'none' ? passages[evidence] : null,
+      label: framingEvidence ? direction : advocacy === 'descriptive' && !directional ? 'none' : 'inconclusive',
+      model,
+      biasVersion: biasAnalysisVersion,
+      advocacy,
+      framingEvidence,
+      allegation: headline && hasConfidence(answers.allegation, 0.55, 0.12) ? answers.allegation.choice : 'inconclusive',
+      language: language === 'author' && !evidence ? 'inconclusive' : language,
+      evidence,
     } };
   } catch (error) {
-    if (error.name === 'TimeoutError') return { status: 504, body: { error: 'Local analysis timed out. Try a shorter excerpt.' } };
+    if (error.name === 'TimeoutError') return { status: 504, body: { error: `${model} analysis timed out.` } };
     return { status: 503, body: { error: 'Start the local d1-2B server on port 8080 and try again.' } };
   }
 }
