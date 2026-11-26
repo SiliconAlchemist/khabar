@@ -1,0 +1,799 @@
+[
+  {
+    "id": "delhi-air",
+    "shortTitle": "Delhi’s winter air",
+    "section": "Environment",
+    "location": "Delhi NCR, India",
+    "date": "2026-11-22",
+    "title": "Delhi’s air crisis stretches beyond its borders",
+    "summary": "In Loni, across the border from Delhi, residents describe living beside furnaces and dust-filled roads. Field reports and pollution records trace the haze to several different sources.",
+    "body": [
+      "In Loni, Sneha Mordani’s reporting for NDTV follows residents living with industrial smoke and road dust. Weeks earlier, inspectors had visited 21 furnace sites in the area and recorded violations at each one. Their findings describe those sites. Measuring the contribution of industry across the city takes a different kind of evidence.",
+      "The answer changes with the hours and the geography. The Centre for Science and Environment found that traffic accounted for an estimated 52% of pollution attributed to sources inside Delhi from 1 to 8 November. For eight hours after Diwali, a separate IITM estimate reported by The Indian Express attributed 71.1% of Delhi’s fine particles to fireworks.",
+      "Farther north, satellites record fires in the paddy belt. The Indian Agricultural Research Institute counted 156 detections in Punjab on 19 November. Estimating how much smoke reached Loni requires wind and atmospheric data as well."
+    ],
+    "publisher": "NDTV",
+    "url": "https://www.ndtv.com/video/pollution-crisis-beyond-delhi-s-borders-how-loni-residents-are-battling-dangerous-air-pollution-1189087",
+    "caption": "Satellite view of haze across the Indo-Gangetic Plain, 3 November 2024.",
+    "credit": "Michala Garrison / NASA Earth Observatory, Suomi NPP VIIRS",
+    "image": "/media/delhi-air.jpg",
+    "timeline": [
+      {
+        "date": "2026-09-29",
+        "title": "Inspectors find violations at 21 Loni sites",
+        "detail": "The commission reports violations at all 21 sites in its targeted inspection on 29 September. Published 2 October.",
+        "url": "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2318353&lang=2&reg=48",
+        "publisher": "Commission for Air Quality Management via PIB"
+      },
+      {
+        "date": "2026-10-29",
+        "title": "The Court sets conditions for Diwali fireworks",
+        "detail": "Court directions on green crackers and monitoring around Diwali.",
+        "url": "https://api.sci.gov.in/supremecourt/2015/32461/32461_2015_4_32_75685_Judgement_29-Oct-2026.pdf",
+        "publisher": "Supreme Court of India",
+        "image": "/media/material-delhi-court.jpg"
+      },
+      {
+        "date": "2026-11-05",
+        "title": "A reporter films stubble burning in Punjab",
+        "detail": "A reporter films a burning field between Sangrur and Patiala.",
+        "url": "https://www.tv9hindi.com/videos/punjab-stubble-burning-fuels-delhi-air-pollution-crisis-tv9-report-3955227.html",
+        "publisher": "TV9 Hindi"
+      },
+      {
+        "date": "2026-11-09",
+        "title": "Delhi wakes to haze after Diwali",
+        "detail": "Field reporting on firework use and visibility the following morning.",
+        "url": "https://www.reuters.com/business/environment/delhi-air-quality-deteriorates-revellers-mark-diwali-with-illegal-fireworks-2026-11-09/",
+        "publisher": "Reuters"
+      },
+      {
+        "date": "2026-11-10",
+        "title": "CPCB explains how its system handles extreme readings",
+        "detail": "The regulator’s public explanation. Moneycontrol and Alt News also reproduce its account.",
+        "url": "https://x.com/CPCB_OFFICIAL/status/2120168096384311550",
+        "publisher": "Central Pollution Control Board"
+      },
+      {
+        "date": "2026-11-11",
+        "title": "A briefing identifies transport as the largest local source",
+        "detail": "The briefing uses IITM model results for 1–8 November. Page 3 breaks out sources within Delhi.",
+        "url": "https://www.cseindia.org/APC-Briefing-note-early-winter-pollutionNov2026.pdf",
+        "publisher": "Centre for Science and Environment",
+        "image": "/media/material-delhi-traffic.jpg"
+      },
+      {
+        "date": "2026-11-11",
+        "title": "Loni residents describe the air across the border",
+        "detail": "Residents describe conditions in Loni. The footage covers the locality of the earlier inspections.",
+        "url": "https://www.ndtv.com/video/pollution-crisis-beyond-delhi-s-borders-how-loni-residents-are-battling-dangerous-air-pollution-1189087",
+        "publisher": "NDTV"
+      },
+      {
+        "date": "2026-11-19",
+        "title": "The satellite bulletin logs Punjab’s farm fires",
+        "detail": "The bulletin records 156 satellite fire detections in Punjab on 19 November. See page 2 for the state breakdown.",
+        "url": "https://creams.iari.res.in/Creams_website_bulletin/Fire_bulletin_2026/Fire_bulletin_2026r/66.RiceResidueFireBulletin_19Nov_2026_ICAR.pdf",
+        "publisher": "ICAR–Indian Agricultural Research Institute",
+        "image": "/media/material-punjab-fires.jpg"
+      },
+      {
+        "date": "2026-11-22",
+        "title": "Delhi’s AQI settles at 239",
+        "detail": "The reported city AQI on 22 November was 239, in the poor category.",
+        "url": "https://www.hindustantimes.com/cities/delhi-news/delhis-aqi-improves-to-239-remains-in-poor-category-for-fourth-day-101795361443789.html",
+        "publisher": "Hindustan Times"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Stubble burning",
+        "color": "#78baff",
+        "headline": "Field observations",
+        "detail": "TV9 Hindi filmed flames in a field between Sangrur and Patiala on 5 November. The report documents one field fire at a known location.",
+        "url": "https://www.tv9hindi.com/videos/punjab-stubble-burning-fuels-delhi-air-pollution-crisis-tv9-report-3955227.html",
+        "publisher": "TV9 Hindi"
+      },
+      {
+        "label": "Stubble burning",
+        "color": "#78baff",
+        "headline": "Satellite counts",
+        "detail": "The ICAR bulletin counted 156 fire detections across Punjab on 19 November. A detection records a fire observed during a satellite overpass.",
+        "url": "https://creams.iari.res.in/Creams_website_bulletin/Fire_bulletin_2026/Fire_bulletin_2026r/66.RiceResidueFireBulletin_19Nov_2026_ICAR.pdf",
+        "publisher": "ICAR–Indian Agricultural Research Institute"
+      },
+      {
+        "label": "Industrial emissions",
+        "color": "#fb765e",
+        "headline": "Furnace inspections",
+        "detail": "Inspectors found violations at all 21 locations they targeted in Loni, including inadequate chimneys and controls.",
+        "url": "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2318353&lang=2&reg=48",
+        "publisher": "Commission for Air Quality Management via PIB"
+      },
+      {
+        "label": "Industrial emissions",
+        "color": "#fb765e",
+        "headline": "Living near industry",
+        "detail": "Residents describe local air conditions. The interviews do not quantify each furnace’s contribution.",
+        "url": "https://www.ndtv.com/video/pollution-crisis-beyond-delhi-s-borders-how-loni-residents-are-battling-dangerous-air-pollution-1189087",
+        "publisher": "NDTV"
+      },
+      {
+        "label": "Diwali spike",
+        "color": "#e7b559",
+        "headline": "Festival night",
+        "detail": "Fireworks accounted for an estimated 71.1% of Delhi’s PM2.5 between 1 and 9 am on 9 November.",
+        "url": "https://indianexpress.com/article/cities/delhi/firecrackers-71-percent-delhi-pm25-diwali-night-10958077/",
+        "publisher": "The Indian Express"
+      },
+      {
+        "label": "Diwali spike",
+        "color": "#e7b559",
+        "headline": "Traffic baseline",
+        "detail": "Vehicles supplied an estimated 52% of the locally attributed contribution during 1–8 November. This is a different period and denominator from the overnight fireworks estimate.",
+        "url": "https://www.cseindia.org/APC-Briefing-note-early-winter-pollutionNov2026.pdf",
+        "publisher": "Centre for Science and Environment"
+      },
+      {
+        "label": "Missing readings",
+        "color": "#85c6af",
+        "headline": "Validation rule",
+        "detail": "CPCB says the automated system excludes over-range hourly readings from the calculation.",
+        "url": "https://x.com/CPCB_OFFICIAL/status/2120168096384311550",
+        "publisher": "Central Pollution Control Board"
+      }
+    ],
+    "sources": [
+      {
+        "title": "NDTV interviews residents in Loni",
+        "publisher": "NDTV",
+        "kind": "Footage",
+        "url": "https://www.ndtv.com/video/pollution-crisis-beyond-delhi-s-borders-how-loni-residents-are-battling-dangerous-air-pollution-1189087",
+        "detail": "Residents describe conditions in Loni. The footage covers the locality of the earlier inspections."
+      },
+      {
+        "title": "CAQM release on Loni furnace inspections",
+        "publisher": "Commission for Air Quality Management via PIB",
+        "kind": "Statement",
+        "url": "https://www.pib.gov.in/PressReleaseIframePage.aspx?PRID=2318353&lang=2&reg=48",
+        "detail": "The commission reports violations at all 21 sites in its targeted inspection on 29 September. Published 2 October."
+      },
+      {
+        "title": "CSE early-winter air pollution briefing",
+        "publisher": "Centre for Science and Environment",
+        "kind": "Document",
+        "url": "https://www.cseindia.org/APC-Briefing-note-early-winter-pollutionNov2026.pdf",
+        "detail": "The briefing uses IITM model results for 1–8 November. Page 3 breaks out sources within Delhi.",
+        "preview": "/media/material-delhi-traffic.jpg"
+      },
+      {
+        "title": "Supreme Court order on green crackers",
+        "publisher": "Supreme Court of India",
+        "kind": "Document",
+        "url": "https://api.sci.gov.in/supremecourt/2015/32461/32461_2015_4_32_75685_Judgement_29-Oct-2026.pdf",
+        "detail": "Court directions on green crackers and monitoring around Diwali.",
+        "preview": "/media/material-delhi-court.jpg"
+      },
+      {
+        "title": "ICAR rice-residue fire bulletin, 19 November",
+        "publisher": "ICAR–Indian Agricultural Research Institute",
+        "kind": "Document",
+        "url": "https://creams.iari.res.in/Creams_website_bulletin/Fire_bulletin_2026/Fire_bulletin_2026r/66.RiceResidueFireBulletin_19Nov_2026_ICAR.pdf",
+        "detail": "The bulletin records 156 satellite fire detections in Punjab on 19 November. See page 2 for the state breakdown.",
+        "preview": "/media/material-punjab-fires.jpg"
+      },
+      {
+        "title": "Field fire on the Sangrur–Patiala road",
+        "publisher": "TV9 Hindi",
+        "kind": "Footage",
+        "url": "https://www.tv9hindi.com/videos/punjab-stubble-burning-fuels-delhi-air-pollution-crisis-tv9-report-3955227.html",
+        "detail": "A reporter films a burning field between Sangrur and Patiala."
+      },
+      {
+        "title": "CPCB statement on readings beyond the display range",
+        "publisher": "Central Pollution Control Board",
+        "kind": "Statement",
+        "url": "https://x.com/CPCB_OFFICIAL/status/2120168096384311550",
+        "detail": "The regulator’s public explanation. Moneycontrol and Alt News also reproduce its account."
+      },
+      {
+        "title": "NASA satellite image of the Indo-Gangetic Plain",
+        "publisher": "NASA Earth Observatory",
+        "kind": "Imagery",
+        "url": "https://science.nasa.gov/earth/earth-observatory/smoky-skies-over-the-indo-gangetic-plain-153540/",
+        "detail": "Archive satellite image by Michala Garrison, NASA Earth Observatory, using Suomi NPP VIIRS data.",
+        "preview": "/media/delhi-air.jpg"
+      }
+    ],
+    "photo": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Smog_in_the_skies_of_Delhi%2C_India.jpg/1280px-Smog_in_the_skies_of_Delhi%2C_India.jpg",
+      "caption": "Archival photograph of sunset through haze at Connaught Place, New Delhi.",
+      "credit": "wili hybrid / Wikimedia Commons · CC BY 2.0",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Smog_in_the_skies_of_Delhi,_India.jpg",
+      "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+    },
+    "video": {
+      "url": "https://www.ndtv.com/video/pollution-crisis-beyond-delhi-s-borders-how-loni-residents-are-battling-dangerous-air-pollution-1189087",
+      "label": "Inside Loni’s air crisis",
+      "publisher": "NDTV",
+      "duration": "5:16"
+    }
+  },
+  {
+    "id": "bepicolombo-mercury-arrival",
+    "shortTitle": "Arrival at Mercury",
+    "section": "Space",
+    "location": "Mercury",
+    "date": "2026-11-23",
+    "title": "After eight years, BepiColombo reaches Mercury",
+    "summary": "A shortened engine burn put the spacecraft into safe mode. Flight controllers confirmed it had reached a stable orbit around the planet.",
+    "body": [
+      "BepiColombo launched in October 2018. Over the next eight years it passed Earth once, Venus twice and Mercury six times, using their gravity to shape its approach to the Sun’s innermost planet.",
+      "On 21 November 2026, the spacecraft performed its orbit-insertion burn. ESA says a software issue ended the manoeuvre early. When contact resumed, flight controllers found the spacecraft in safe mode and confirmed it was orbiting Mercury.",
+      "ESA’s Mercury Planetary Orbiter and Japan’s Mio are travelling together. The mission calls for them to separate and study the planet and its magnetic environment from different orbits."
+    ],
+    "publisher": "European Space Agency",
+    "url": "https://www.esa.int/articles/about-us/directorates/operations/bepicolombo-safely-in-mercury-orbit-despite-unexpected-challenge",
+    "caption": "Mercury pictured by the earlier MESSENGER mission.",
+    "credit": "NASA / Johns Hopkins University Applied Physics Laboratory / Carnegie Institution of Washington",
+    "image": "/media/bepicolombo-mercury-arrival.jpg",
+    "timeline": [
+      {
+        "date": "2018-10-20",
+        "title": "Launch from Kourou",
+        "detail": "Ariane 5 sent the two science orbiters and their transfer module on their way.",
+        "url": "https://www.esa.int/media/bepicolombo-timeline",
+        "publisher": "European Space Agency"
+      },
+      {
+        "date": "2025-01-08",
+        "title": "Sixth flyby of Mercury",
+        "detail": "The last of nine planetary flybys shaped the final approach.",
+        "url": "https://www.esa.int/media/bepicolombo-timeline",
+        "publisher": "European Space Agency"
+      },
+      {
+        "date": "2026-11-21",
+        "title": "Spacecraft enters Mercury orbit",
+        "detail": "ESA confirmed a stable orbit and traced the early cutoff during the burn to a software issue.",
+        "url": "https://www.esa.int/articles/about-us/directorates/operations/bepicolombo-safely-in-mercury-orbit-despite-unexpected-challenge",
+        "publisher": "European Space Agency"
+      },
+      {
+        "date": "2026-11-23",
+        "title": "ESA confirms a stable orbit",
+        "detail": "ESA confirmed a stable orbit and traced the early cutoff during the burn to a software issue.",
+        "url": "https://www.esa.int/articles/about-us/directorates/operations/bepicolombo-safely-in-mercury-orbit-despite-unexpected-challenge",
+        "publisher": "European Space Agency"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Flight operations",
+        "color": "#78baff",
+        "headline": "An early engine cutoff",
+        "detail": "ESA confirmed a stable orbit and traced the early cutoff during the burn to a software issue.",
+        "url": "https://www.esa.int/articles/about-us/directorates/operations/bepicolombo-safely-in-mercury-orbit-despite-unexpected-challenge",
+        "publisher": "European Space Agency"
+      },
+      {
+        "label": "Planetary science",
+        "color": "#fb765e",
+        "headline": "Two orbiters, two vantage points",
+        "detail": "ESA and JAXA plan to separate their orbiters to study the rocky planet and its magnetic surroundings.",
+        "url": "https://www.esa.int/media/bepicolombo-arrival-at-mercury-timeline",
+        "publisher": "European Space Agency"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Mercury orbit insertion status report",
+        "kind": "Mission update",
+        "publisher": "European Space Agency",
+        "url": "https://www.esa.int/articles/about-us/directorates/operations/bepicolombo-safely-in-mercury-orbit-despite-unexpected-challenge",
+        "detail": "ESA confirmed a stable orbit and traced the early cutoff during the burn to a software issue."
+      },
+      {
+        "title": "Mission flight timeline",
+        "publisher": "European Space Agency",
+        "kind": "Document",
+        "url": "https://www.esa.int/media/bepicolombo-timeline",
+        "detail": "ESA’s graphic plots the Earth, Venus and Mercury flybys and the planned orbit entry."
+      },
+      {
+        "title": "Arrival sequence",
+        "publisher": "European Space Agency",
+        "kind": "Document",
+        "url": "https://www.esa.int/media/bepicolombo-arrival-at-mercury-timeline",
+        "detail": "ESA explains how the two spacecraft will move into their science orbits."
+      }
+    ]
+  },
+  {
+    "id": "rohingya-icj-judgment",
+    "shortTitle": "The Rohingya judgment",
+    "section": "World",
+    "location": "The Hague, Netherlands",
+    "date": "2026-11-19",
+    "title": "What the Rohingya judgment means for survivors",
+    "summary": "Seven years after The Gambia filed its case, the International Court of Justice ruled that Myanmar committed genocide against the Rohingya during the 2017 operations in northern Rakhine State.",
+    "body": [
+      "At the Peace Palace in The Hague, judges issued their ruling on Myanmar’s responsibility under the Genocide Convention. The case dates to November 2019, when The Gambia filed its application. In July 2022 the court dismissed Myanmar’s preliminary objections, allowing the case to proceed.",
+      "In Cox’s Bazar, Bangladesh, Reuters interviewed Rahama Khatun as she followed the ruling. Her account puts a family’s experience beside a judgment that addresses the responsibility of a state. For survivors, the practical question now is how the decision will be carried out."
+    ],
+    "publisher": "Reuters via CNA",
+    "url": "https://www.channelnewsasia.com/asia/justice-finally-being-served-rohingya-widow-hears-myanmar-genocide-ruling-refugee-camp-6566196",
+    "caption": "The Peace Palace in The Hague, home of the International Court of Justice.",
+    "credit": "*rboed* / Flickr · CC BY 2.0 · cropped",
+    "image": "/media/rohingya-icj-judgment.jpg",
+    "timeline": [
+      {
+        "date": "2019-11-11",
+        "title": "The Gambia files its application",
+        "detail": "Explains why The Gambia could bring the case.",
+        "url": "https://api.icj-cij.org/sites/default/files/case-related/178/178-20220722-jud-01-00-en.pdf",
+        "publisher": "International Court of Justice"
+      },
+      {
+        "date": "2022-07-22",
+        "title": "Court rejects Myanmar’s preliminary objections",
+        "detail": "Explains why The Gambia could bring the case.",
+        "url": "https://api.icj-cij.org/sites/default/files/case-related/178/178-20220722-jud-01-00-en.pdf",
+        "publisher": "International Court of Justice"
+      },
+      {
+        "date": "2026-11-19",
+        "title": "Court delivers its judgment on the merits",
+        "detail": "Full judgment, hosted by UNHCR’s Refworld.",
+        "url": "https://www.refworld.org/sites/default/files/2026-11/178-20261119-jud-01-00-en.pdf",
+        "publisher": "International Court of Justice"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Survivor testimony",
+        "color": "#78baff",
+        "headline": "Following the decision from Bangladesh",
+        "detail": "Khatun described the ruling as a moment of justice for her family.",
+        "url": "https://www.channelnewsasia.com/asia/justice-finally-being-served-rohingya-widow-hears-myanmar-genocide-ruling-refugee-camp-6566196",
+        "publisher": "Reuters via CNA"
+      },
+      {
+        "label": "Court findings",
+        "color": "#fb765e",
+        "headline": "A judgment on state responsibility",
+        "detail": "The court found that Myanmar violated its obligations under the Genocide Convention in the 2017 clearance operations.",
+        "url": "https://www.refworld.org/sites/default/files/2026-11/178-20261119-jud-01-00-en.pdf",
+        "publisher": "International Court of Justice"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Judgment on the merits",
+        "publisher": "International Court of Justice",
+        "kind": "Document",
+        "url": "https://www.refworld.org/sites/default/files/2026-11/178-20261119-jud-01-00-en.pdf",
+        "detail": "Full judgment, hosted by UNHCR’s Refworld."
+      },
+      {
+        "title": "Judgment on preliminary objections",
+        "publisher": "International Court of Justice",
+        "kind": "Document",
+        "url": "https://api.icj-cij.org/sites/default/files/case-related/178/178-20220722-jud-01-00-en.pdf",
+        "detail": "Explains why The Gambia could bring the case."
+      },
+      {
+        "title": "Cover photograph",
+        "publisher": "*rboed*",
+        "kind": "Imagery",
+        "url": "https://www.flickr.com/photos/92082510@N04/10073125893",
+        "detail": "The Peace Palace in The Hague, home of the court. Cropped from “The Peace Palace seen from its garden” under CC BY 2.0. https://creativecommons.org/licenses/by/2.0/"
+      }
+    ],
+    "creditUrl": "https://www.flickr.com/photos/92082510@N04/10073125893",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+  },
+  {
+    "id": "reef-recovery",
+    "shortTitle": "Great Barrier Reef",
+    "section": "Oceans",
+    "location": "Queensland, Australia",
+    "date": "2026-08-11",
+    "title": "A patchwork recovery on the Great Barrier Reef",
+    "summary": "After a season of steep losses, divers found hard coral growing back in parts of the reef. A regional average conceals how differently nearby reefs can fare.",
+    "body": [
+      "The Australian Institute of Marine Science surveys hard coral cover across the northern, central and southern Great Barrier Reef. Its 2024–25 survey recorded losses across all three regions following widespread bleaching and other disturbances.",
+      "The next field season brought a mixed picture. The institute recorded an increase on 28% of surveyed reefs, a decline on 16% and no net change on the remaining 56%. Scientists and trained tourism crews collect observations at different scales, giving researchers more than one way to follow those changes."
+    ],
+    "publisher": "Australian Institute of Marine Science",
+    "url": "https://www.aims.gov.au/monitoring-great-barrier-reef/gbr-condition-summary-2025-26",
+    "caption": "Archival Landsat view of the southern Great Barrier Reef.",
+    "credit": "Landsat 7 / NASA Earth Observatory",
+    "image": "/media/reef-recovery.jpg",
+    "timeline": [
+      {
+        "date": "2024-04-15",
+        "title": "NOAA confirms a global bleaching event",
+        "detail": "NOAA announced the fourth recorded global bleaching event on 15 April 2024.",
+        "url": "https://www.noaa.gov/news-release/noaa-confirms-4th-global-coral-bleaching-event",
+        "publisher": "NOAA"
+      },
+      {
+        "date": "2025-08-06",
+        "title": "Divers document losses across three regions",
+        "detail": "The annual field report draws on surveys of 124 reefs.",
+        "url": "https://www.aims.gov.au/sites/default/files/2025-08/AIMS_LTMP_Report_GBR_coral_status_2024_2025_final_web.pdf",
+        "publisher": "Australian Institute of Marine Science"
+      },
+      {
+        "date": "2026-05-25",
+        "title": "Tour crews train to record reef health",
+        "detail": "The authority reported training more than 40 tourism staff in May 2026.",
+        "url": "https://www.gbrmpa.gov.au/news/operators-trained-keep-eyes-reef",
+        "publisher": "Great Barrier Reef Marine Park Authority"
+      },
+      {
+        "date": "2026-08-11",
+        "title": "The next surveys find an uneven recovery",
+        "detail": "The institute presents the next field season’s regional cover estimates and charts.",
+        "url": "https://www.aims.gov.au/monitoring-great-barrier-reef/gbr-condition-summary-2025-26",
+        "publisher": "Australian Institute of Marine Science"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Coral cover",
+        "color": "#78baff",
+        "headline": "An uneven rebound",
+        "detail": "The next survey found increases in the north and centre. Average cover in the south was little changed.",
+        "url": "https://www.aims.gov.au/monitoring-great-barrier-reef/gbr-condition-summary-2025-26",
+        "publisher": "Australian Institute of Marine Science"
+      },
+      {
+        "label": "Ocean heat",
+        "color": "#fb765e",
+        "headline": "Global warning",
+        "detail": "In April 2024, observations across ocean basins met the criteria for a global bleaching event.",
+        "url": "https://www.noaa.gov/news-release/noaa-confirms-4th-global-coral-bleaching-event",
+        "publisher": "NOAA"
+      },
+      {
+        "label": "Eyes on the reef",
+        "color": "#e7b559",
+        "headline": "Tourism crews",
+        "detail": "Tour staff trained in Airlie Beach and Cairns to record reef conditions on the routes they visit.",
+        "url": "https://www.gbrmpa.gov.au/news/operators-trained-keep-eyes-reef",
+        "publisher": "Great Barrier Reef Marine Park Authority"
+      }
+    ],
+    "sources": [
+      {
+        "title": "The 2025-26 coral survey",
+        "publisher": "Australian Institute of Marine Science",
+        "kind": "Data record",
+        "url": "https://www.aims.gov.au/monitoring-great-barrier-reef/gbr-condition-summary-2025-26",
+        "detail": "The institute presents the next field season’s regional cover estimates and charts."
+      },
+      {
+        "title": "The 2024-25 coral survey",
+        "publisher": "Australian Institute of Marine Science",
+        "kind": "Document",
+        "url": "https://www.aims.gov.au/sites/default/files/2025-08/AIMS_LTMP_Report_GBR_coral_status_2024_2025_final_web.pdf",
+        "detail": "The annual field report draws on surveys of 124 reefs."
+      },
+      {
+        "title": "The global bleaching declaration",
+        "publisher": "NOAA",
+        "kind": "Statement",
+        "url": "https://www.noaa.gov/news-release/noaa-confirms-4th-global-coral-bleaching-event",
+        "detail": "NOAA announced the fourth recorded global bleaching event on 15 April 2024."
+      },
+      {
+        "title": "Tourism monitoring dashboard",
+        "publisher": "Reef Knowledge System",
+        "kind": "Data record",
+        "url": "https://reefknowledgesystem.gbrmpa.gov.au/resource-hub/dashboards/tourism-monitoring-effort",
+        "detail": "Survey dashboard tracking the monitoring effort of tourism operators."
+      },
+      {
+        "title": "The southern reef from Landsat",
+        "publisher": "NASA Earth Observatory",
+        "kind": "Imagery",
+        "url": "https://science.nasa.gov/earth/earth-observatory/great-barrier-reef-3270/",
+        "detail": "Archival geographic imagery of the southern reef system."
+      }
+    ]
+  },
+  {
+    "id": "manhattan-toll",
+    "shortTitle": "Manhattan’s congestion toll",
+    "section": "Cities",
+    "location": "New York, USA",
+    "date": "2026-01-06",
+    "title": "Who gained from Manhattan’s congestion toll?",
+    "summary": "The first year brought fewer vehicles into the charging zone. Delivery operators and shopkeepers describe where the cost of a trip ended up.",
+    "body": [
+      "On the toll’s first anniversary, New York State reported 27 million fewer vehicle entries to the congestion relief zone, an 11% drop. A separate working paper used road-speed observations to estimate how travel times changed across the wider road network.",
+      "The effects look different on a delivery invoice. Merchants interviewed during the first week described new surcharges, and a trucking operator later described passing a share of his toll costs on to customers. The MTA’s discount rules show which frequent low-income drivers can receive relief."
+    ],
+    "publisher": "amNewYork",
+    "url": "https://www.amny.com/news/congestion-pricing-27-million-fewer-vehicles/",
+    "caption": "Lower Manhattan and its waterways, photographed from space in 2002.",
+    "credit": "Landsat 7 / USGS EROS via NASA Earth Observatory",
+    "image": "/media/manhattan-toll.jpg",
+    "timeline": [
+      {
+        "date": "2025-01-05",
+        "title": "Manhattan begins charging vehicles",
+        "detail": "The charging scheme began on 5 January 2025.",
+        "url": "https://apnews.com/article/cbd1d520ccbfbeb68d248e9d2ed3bd62",
+        "publisher": "Associated Press"
+      },
+      {
+        "date": "2025-01-08",
+        "title": "Shopkeepers describe delivery surcharges",
+        "detail": "On 8 January 2025, businesses described the delivery surcharges they faced.",
+        "url": "https://abc7ny.com/amp/post/small-businesses-say-customers-will-feel-effects-nyc-congestion-pricing-prices-goods-increase/15778756/",
+        "publisher": "ABC7 New York"
+      },
+      {
+        "date": "2026-01-05",
+        "title": "The first full year of entries is counted",
+        "detail": "The state released its first-year traffic and transit figures on 5 January 2026.",
+        "url": "https://www.governor.ny.gov/news/less-traffic-better-transit-its-first-anniversary-governor-hochul-celebrates-transformational",
+        "publisher": "Office of the Governor of New York"
+      },
+      {
+        "date": "2026-01-06",
+        "title": "A trucking operator counts the cost",
+        "detail": "The operator described passing part of his toll costs on to customers.",
+        "url": "https://westchester.news12.com/2026/01/06/congestionpricing/4wP92E6iJFJOKsFV2YH9nK",
+        "publisher": "News 12 Westchester"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Traffic flow",
+        "color": "#78baff",
+        "headline": "Fewer entries",
+        "detail": "At the first anniversary, the state reported an 11% drop in vehicle entries to the charging zone.",
+        "url": "https://www.governor.ny.gov/news/less-traffic-better-transit-its-first-anniversary-governor-hochul-celebrates-transformational",
+        "publisher": "Office of the Governor of New York"
+      },
+      {
+        "label": "Delivery costs",
+        "color": "#fb765e",
+        "headline": "Shop invoices",
+        "detail": "Some merchants reported a new delivery surcharge within days of the launch. Their invoices show how a toll can reach a business that never drives into the zone.",
+        "url": "https://abc7ny.com/amp/post/small-businesses-say-customers-will-feel-effects-nyc-congestion-pricing-prices-goods-increase/15778756/",
+        "publisher": "ABC7 New York"
+      },
+      {
+        "label": "Access & exemptions",
+        "color": "#e7b559",
+        "headline": "Frequent trips",
+        "detail": "The low-income plan discounts eligible peak trips after ten qualifying trips in a calendar month.",
+        "url": "https://www.mta.info/document/160966",
+        "publisher": "Metropolitan Transportation Authority"
+      }
+    ],
+    "sources": [
+      {
+        "title": "One year of vehicle entries",
+        "publisher": "Office of the Governor of New York",
+        "kind": "Statement",
+        "url": "https://www.governor.ny.gov/news/less-traffic-better-transit-its-first-anniversary-governor-hochul-celebrates-transformational",
+        "detail": "The state released its first-year traffic and transit figures on 5 January 2026."
+      },
+      {
+        "title": "Travel speeds beyond the toll zone",
+        "publisher": "National Bureau of Economic Research",
+        "kind": "Document",
+        "url": "https://www.nber.org/papers/w33584",
+        "detail": "The authors use road-speed observations and a comparison model to estimate changes across the road network."
+      },
+      {
+        "title": "Low-income discount rules",
+        "publisher": "Metropolitan Transportation Authority",
+        "kind": "Document",
+        "url": "https://www.mta.info/document/160966",
+        "detail": "Official guidance for qualifying drivers who make repeated trips into the zone."
+      },
+      {
+        "title": "Lower Manhattan from Landsat",
+        "publisher": "NASA Earth Observatory / USGS",
+        "kind": "Imagery",
+        "url": "https://science.nasa.gov/earth/earth-observatory/new-york-city-10184/",
+        "detail": "Geographic context from 2002, before the toll was introduced."
+      },
+      {
+        "title": "First-anniversary briefing",
+        "publisher": "New York State",
+        "kind": "Footage",
+        "url": "https://www.governor.ny.gov/news/video-audio-photos-rush-transcript-less-traffic-better-transit-its-first-anniversary-governor",
+        "detail": "Video, audio and transcript of the state’s anniversary briefing."
+      }
+    ],
+    "video": {
+      "url": "https://www.governor.ny.gov/news/video-audio-photos-rush-transcript-less-traffic-better-transit-its-first-anniversary-governor",
+      "label": "The first year of the toll",
+      "publisher": "New York State"
+    }
+  },
+  {
+    "id": "chandrayaan-three-modules",
+    "shortTitle": "Chandrayaan-3",
+    "section": "Space",
+    "location": "India",
+    "date": "2023-12-04",
+    "title": "The part of Chandrayaan-3 that came home",
+    "summary": "Vikram and Pragyan worked on the Moon. Engineers used fuel left in the propulsion module to send it back into orbit around Earth.",
+    "body": [
+      "Chandrayaan-3 entered lunar orbit on 5 August 2023. Twelve days later Vikram separated from the propulsion module. The lander touched down on 23 August and deployed the Pragyan rover on the surface.",
+      "The propulsion module had already delivered the lander. On 4 December, ISRO described how its engineers used the remaining propellant to transfer that module into Earth orbit. The mission log and landing broadcast follow the other two vehicles."
+    ],
+    "publisher": "ISRO",
+    "url": "https://www.isro.gov.in/Ch3_Propulsion_Module_moved_from_Lunar_orbit_to_Earth_orbit.html",
+    "caption": "Mission diagram from ISRO’s propulsion module update.",
+    "credit": "Indian Space Research Organisation",
+    "image": "/media/chandrayaan-three-modules.jpg",
+    "timeline": [
+      {
+        "date": "2023-08-05",
+        "title": "Spacecraft enters lunar orbit",
+        "detail": "Describes the braking manoeuvre that brought the spacecraft into lunar orbit.",
+        "url": "https://www.isro.gov.in/Ch3_Lunar_Orbit_Insertion_Press_Release.html",
+        "publisher": "ISRO"
+      },
+      {
+        "date": "2023-08-17",
+        "title": "Lander separates from propulsion module",
+        "detail": "Dated entries distinguish the lander separation from the surface landing.",
+        "url": "https://www.isro.gov.in/Chandrayaan3.html",
+        "publisher": "ISRO"
+      },
+      {
+        "date": "2023-08-23",
+        "title": "Vikram lands on the Moon",
+        "detail": "Dated entries distinguish the lander separation from the surface landing.",
+        "url": "https://www.isro.gov.in/Chandrayaan3.html",
+        "publisher": "ISRO"
+      },
+      {
+        "date": "2023-12-04",
+        "title": "ISRO announces the propulsion module’s return to Earth orbit",
+        "detail": "Identifies the returning spacecraft and explains the use of its remaining fuel. Cover diagram from this ISRO update.",
+        "url": "https://www.isro.gov.in/Ch3_Propulsion_Module_moved_from_Lunar_orbit_to_Earth_orbit.html",
+        "publisher": "ISRO"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Surface mission",
+        "color": "#78baff",
+        "headline": "Vikram and Pragyan",
+        "detail": "The lander and rover operated their instruments on the lunar surface.",
+        "url": "https://www.isro.gov.in/Chandrayaan3.html",
+        "publisher": "ISRO"
+      },
+      {
+        "label": "Orbital mission",
+        "color": "#fb765e",
+        "headline": "A second flight for the carrier",
+        "detail": "Mission controllers used propellant remaining in the propulsion module to return it to Earth orbit.",
+        "url": "https://www.isro.gov.in/Ch3_Propulsion_Module_moved_from_Lunar_orbit_to_Earth_orbit.html",
+        "publisher": "ISRO"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Propulsion module update",
+        "publisher": "ISRO",
+        "kind": "Statement",
+        "url": "https://www.isro.gov.in/Ch3_Propulsion_Module_moved_from_Lunar_orbit_to_Earth_orbit.html",
+        "detail": "Identifies the returning spacecraft and explains the use of its remaining fuel. Cover diagram from this ISRO update."
+      },
+      {
+        "title": "Mission log",
+        "publisher": "ISRO",
+        "kind": "Data record",
+        "url": "https://www.isro.gov.in/Chandrayaan3.html",
+        "detail": "Dated entries distinguish the lander separation from the surface landing."
+      },
+      {
+        "title": "Lunar orbit insertion",
+        "publisher": "ISRO",
+        "kind": "Statement",
+        "url": "https://www.isro.gov.in/Ch3_Lunar_Orbit_Insertion_Press_Release.html",
+        "detail": "Describes the braking manoeuvre that brought the spacecraft into lunar orbit."
+      },
+      {
+        "title": "Chandrayaan-3 landing broadcast",
+        "publisher": "ISRO",
+        "kind": "Footage",
+        "url": "https://www.youtube.com/watch?v=DLA_64yz8Ss",
+        "detail": "ISRO’s 23 August 2023 broadcast follows Vikram during the landing. The December mission update covers the propulsion module."
+      }
+    ],
+    "video": {
+      "url": "https://www.youtube.com/watch?v=DLA_64yz8Ss",
+      "label": "Vikram’s lunar landing",
+      "publisher": "ISRO"
+    }
+  },
+  {
+    "id": "electoral-bond-disclosures",
+    "shortTitle": "Electoral bonds",
+    "section": "Politics",
+    "location": "New Delhi, India",
+    "date": "2024-03-11",
+    "title": "The records behind the electoral bonds ruling",
+    "summary": "The Supreme Court turned down SBI’s request for more time. The hearing hinged on how the bank kept its purchase and redemption records.",
+    "body": [
+      "In February 2024 the Supreme Court struck down India’s electoral bonds scheme and directed the State Bank of India to disclose information about purchases and redemptions. SBI subsequently asked for an extension until June.",
+      "The bank said matching the two sets of transactions would take time. On 11 March the court said its order required disclosure of the available records. It ordered SBI to supply them by 12 March. The two judgments show how the dispute moved from voters’ access to information to the practical question of what the bank held."
+    ],
+    "publisher": "The Indian Express",
+    "url": "https://indianexpress.com/article/explained/explained-law/sc-sbis-application-extension-electoral-bonds-9207859/",
+    "caption": "First page of the Supreme Court’s March 2024 order.",
+    "credit": "Supreme Court of India",
+    "image": "/media/electoral-bond-disclosures.jpg",
+    "timeline": [
+      {
+        "date": "2019-04-12",
+        "title": "Interim order requires collection of contribution details",
+        "detail": "Records SBI’s application, the bank’s explanation and the court’s directions. The cover shows page one.",
+        "url": "https://api.sci.gov.in/supremecourt/2024/10382/10382_2024_1_301_51365_Judgement_11-Mar-2024.pdf",
+        "publisher": "Supreme Court of India"
+      },
+      {
+        "date": "2024-02-15",
+        "title": "Court strikes down the scheme and directs SBI to disclose records",
+        "detail": "Sets out why anonymity under the scheme violated voters’ right to information.",
+        "url": "https://api.sci.gov.in/supremecourt/2017/27935/27935_2017_1_1501_50573_Judgement_15-Feb-2024.pdf",
+        "publisher": "Supreme Court of India"
+      },
+      {
+        "date": "2024-03-11",
+        "title": "Court rejects the extension and orders disclosure by 12 March",
+        "detail": "Records SBI’s application, the bank’s explanation and the court’s directions. The cover shows page one.",
+        "url": "https://api.sci.gov.in/supremecourt/2024/10382/10382_2024_1_301_51365_Judgement_11-Mar-2024.pdf",
+        "publisher": "Supreme Court of India"
+      }
+    ],
+    "perspectives": [
+      {
+        "label": "Bank records",
+        "color": "#78baff",
+        "headline": "State Bank of India",
+        "detail": "SBI said matching purchases with redemptions would take time because it kept the records separately.",
+        "url": "https://api.sci.gov.in/supremecourt/2024/10382/10382_2024_1_301_51365_Judgement_11-Mar-2024.pdf",
+        "publisher": "Supreme Court of India"
+      },
+      {
+        "label": "Disclosure order",
+        "color": "#fb765e",
+        "headline": "Supreme Court of India",
+        "detail": "The Court said the two sets of transaction details were already available. Its directions called for disclosure of those records.",
+        "url": "https://api.sci.gov.in/supremecourt/2024/10382/10382_2024_1_301_51365_Judgement_11-Mar-2024.pdf",
+        "publisher": "Supreme Court of India"
+      }
+    ],
+    "sources": [
+      {
+        "title": "March disclosure order",
+        "publisher": "Supreme Court of India",
+        "kind": "Document",
+        "url": "https://api.sci.gov.in/supremecourt/2024/10382/10382_2024_1_301_51365_Judgement_11-Mar-2024.pdf",
+        "detail": "Records SBI’s application, the bank’s explanation and the court’s directions. The cover shows page one."
+      },
+      {
+        "title": "February judgment",
+        "publisher": "Supreme Court of India",
+        "kind": "Document",
+        "url": "https://api.sci.gov.in/supremecourt/2017/27935/27935_2017_1_1501_50573_Judgement_15-Feb-2024.pdf",
+        "detail": "Sets out why anonymity under the scheme violated voters’ right to information."
+      }
+    ]
+  }
+]

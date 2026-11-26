@@ -1,0 +1,28 @@
+@font-face {
+  font-family: "STIX General";
+  src: url("./fonts/STIXGeneral.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "STIX General";
+  src: url("./fonts/STIXGeneralBol.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "STIX General";
+  src: url("./fonts/STIXGeneralItalic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "STIX General";
+  src: url("./fonts/STIXGeneralBolIta.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
